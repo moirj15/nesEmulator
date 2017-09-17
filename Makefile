@@ -1,6 +1,6 @@
 CC = g++
 FLAGS = -std=c++14 -Wall -Wextra -pedantic
-OBJ = main.o 6502_cpu.o debug.o nes_file.o 
+OBJ = main.o opCodes.o #debug.o nes_file.o 
 FILES = $*.c $*.h
 
 all: $(OBJ)
