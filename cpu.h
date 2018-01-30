@@ -1,22 +1,33 @@
 #ifndef CPU_H
 #define CPU_H
 
-#include <stdint.h>
-#include <vector>
+#include "utils.h"
 
-using namespace std;
+struct Cpu
+{
+	// General purpose registers
+	u8 	A;
+	u8 	X;
+	u8 	Y;
 
-class Cpu {
-private:
-	vector<uint8_t> memory;
-	uint8_t			accumulator;
-	uint8_t			X;
-	uint8_t			Y;
-	uint8_t			flag;
+	// Special purpose registers
+	u8 	SP;
+	u8 	status;
+	u16 PC;
 
-public:
-	Cpu();
-	~Cpu();
+	u8 memory[0x10000]; // for now allocate the entire address space for the emulator
+
+	const s32 CYCLES_PER_FRAME = 29834;
+	s32 remainingCycles; //borrowed from github/AndreaOrru/LaiNES 
+
+	Cpu(void);
+	~Cpu(void);
+
+	/**
+ 	 * Run the Cpu for a cycle.
+ 	 */
+	void tick(void);
 };
 
-#endif 
+
+#endif

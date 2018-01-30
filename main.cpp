@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
-#include "debug.h"
-
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
+	printf("works\n");
 	return EXIT_SUCCESS;
 }
