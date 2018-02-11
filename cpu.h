@@ -118,6 +118,11 @@ private:
 	 */
 	u8 getIndirectIndexed(void);
 
+	// Flag operations
+
+	void setCarry(u8 preAdd);
+	void setZero(void);
+	void setOverflow(u8 preAdd);
 	/**
 	 * Add with carry instructions.
 	 */

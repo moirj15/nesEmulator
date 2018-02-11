@@ -149,7 +149,11 @@ u8 Cpu::getIndexedIndirect(void)
  */
 u8 Cpu::getIndirectIndexed(void)
 {
-
+	u8 zp = getImmediate();
+	u16 address = memory[zp] << 8;
+	address |= memory[zp + 1];
+	address += Y;
+	return memory[address];
 }
 
 
@@ -167,55 +171,39 @@ void Cpu::run(void)
  */
 void Cpu::addc_imm(void)
 {
-	pc++;
-	u8 preAdd = A >> 7;
-	A += memory[pc] + (CARRY & status);
-	u8 postAdd = A >> 7;
-	status |= (preAdd != postAdd);
-	status |= (A == 0) << 1;
-	status |= (A & NEGATIVE) << 7;
-	pc++;
+	u8 preAdd = A;
+	u8 carry = status & CARRY;
+	A += getImmediate() + carry;
+	setCarry(preAdd);
+	setZero();
+	setOverflow(preAdd);
+
 	tick();
 	tick();
 }
 
 void Cpu::addc_zp(void)
 {
-	addc_imm();
+	u8 preAdd = A;
+	u8 carry = status & CARRY;
+	A += memory[getImmediate()] + carry;
+
+	tick();
+	tick();
 	tick();
 }
 
 void Cpu::addc_zpx(void)
 {
-	pc++;
-	u8 preAdd = A >> 7;
-	A += memory[memory[pc] + X] + (CARRY & status);
-	u8 postAdd = A >> 7;
-	status |= (preAdd != postAdd);
-	status |= (A == 0) << 1;
-	status |= (A & NEGATIVE) << 7;
-	pc++;
 
 	tick();
 	tick();
 	tick();
 	tick();
-
 }
 
 void Cpu::addc_abs(void)
 {
-	pc++;
-	u8 preAdd = A >> 7;
-	u16 memLoc = memory[pc] << 8;
-	pc++;
-	memLoc |= memory[pc];
-	A += memory[memLoc] + (CARRY & status);
-	u8 postAdd = A >> 7;
-	status |= (preAdd != postAdd);
-	status |= (A == 0) << 1;
-	status |= (A & NEGATIVE) << 7;
-	pc++;
 	tick();
 	tick();
 	tick();
@@ -224,67 +212,22 @@ void Cpu::addc_abs(void)
 
 void Cpu::addc_abs_x(void)
 {
-	pc++;
-	u8 preAdd = A >> 7;
-	u16 memLoc = memory[pc] << 8;
-	pc++;
-	memLoc |= memory[pc];
-	A += memory[memLoc + X] + (CARRY & status);
-	u8 postAdd = A >> 7;
-	status |= (preAdd != postAdd);
-	status |= (A == 0) << 1;
-	status |= (A & NEGATIVE) << 7;
-	pc++;
-	tick();
-	tick();
-	tick();
-	tick();
 	//TODO: check if page is crossed
 
 }
 
 void Cpu::addc_abs_y(void)
 {
-	pc++;
-	u16 memLoc = memory[pc] << 8;
-	memLoc |= memory[pc + 1];
-	A += memory[memLoc] + (CARRY & status);
-	pc++;
-	tick();
-	tick();
-	tick();
-	tick();
 	//TODO: check if page is crossed
 }
 
 void Cpu::addc_ind_x(void)
 {
-	pc++;
-	u16 memLoc = memory[memory[pc]] + X;
-	memLoc |= memory[memory[pc]] + X + 1;
-	A += memory[memLoc] + (CARRY & status);
-	tick();
-	tick();
-	tick();
-	tick();
-	tick();
-	tick();
 	//TODO: check if page is crossed
 }
 
 void Cpu::addc_ind_y(void)
 {
-	pc++;
-	u16 memLoc = memory[memory[pc]] << 8;
-	memLoc |= memory[memory[pc] + 1];
-	memLoc += Y;
-	A += memory[memLoc] + (CARRY & status);
-	pc++;
-	tick();
-	tick();
-	tick();
-	tick();
-	tick();
 	//TODO: check if page is crossed
 }
 
