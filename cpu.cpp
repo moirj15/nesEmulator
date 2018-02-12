@@ -27,6 +27,14 @@ Cpu::~Cpu(void)
 
 }
 
+void Cpu::run(void)
+{
+	switch (memory[pc]) {
+    case NOP:
+        nop();
+        break;
+	}
+}
 /**
  * Run the Cpu for a cycle.
  */
@@ -93,12 +101,12 @@ u8 Cpu::getZeroPageIndexed(void)
 u8 Cpu::getAbsolute(void)
 {
 	pc++;
-	u16 ret = memory[pc] << 8;
+	u16 loc = memory[pc] << 8;
 	pc++;
-	ret |= memory[pc];
+	loc |= memory[pc];
 	pc++;
 
-	return ret;
+	return memory[loc];
 }
 
 /**
@@ -110,7 +118,18 @@ u8 Cpu::getAbsolute(void)
  */
 u8 Cpu::getAbsoluteXIndex(void)
 {
-	return memory[getAbsolute() + X];
+	// TODO: refractor out the duplicate code
+	pc++;
+	u16 loc = memory[pc] << 8;
+	pc++;
+	loc |= memory[pc];
+	pc++;
+
+    if ((loc & 0x00FF) + X > 0x00FF) {
+        tick();	// handle page cross
+    }
+
+	return memory[loc + X];
 }
 
 /**
@@ -122,7 +141,18 @@ u8 Cpu::getAbsoluteXIndex(void)
  */
 u8 Cpu::getAbsoluteYIndex(void)
 {
-	return memory[getAbsolute() + Y];
+	// TODO: refractor out the duplicate code
+	pc++;
+	u16 loc = memory[pc] << 8;
+	pc++;
+	loc |= memory[pc];
+	pc++;
+
+    if ((loc & 0x00FF) + Y > 0x00FF) {
+        tick();	// handle page cross
+    }
+
+	return memory[loc + Y];
 }
 
 /**
@@ -153,17 +183,36 @@ u8 Cpu::getIndirectIndexed(void)
 	u16 address = memory[zp] << 8;
 	address |= memory[zp + 1];
 	address += Y;
-	return memory[address];
+    
+    if ((address & 0x00FF) + Y > 0x00FF) {
+        tick();	// handle page cross
+    }
+
+    return memory[address];
 }
 
-
-void Cpu::run(void)
+// Flag operations
+void Cpu::setCarry(u8 preAdd)
 {
-	switch (memory[pc]) {
-		case NOP:
-			nop();
-			break;
-	}
+    // NOTE: this probably only works for addition, also there may be a
+    // simpler method to do this
+	if (preAdd > A) {
+        status |= CARRY;
+    }
+}
+
+void Cpu::setZero(void)
+{
+    if (!A) {
+        status |= ZERO;
+    }
+}
+
+void Cpu::setOverflow(u8 preAdd)
+{
+    if ((status & CARRY) && (A & NEGATIVE)) {
+        status |= OVERFLOW;
+    }
 }
 
 /**
@@ -187,6 +236,9 @@ void Cpu::addc_zp(void)
 	u8 preAdd = A;
 	u8 carry = status & CARRY;
 	A += memory[getImmediate()] + carry;
+	setCarry(preAdd);
+	setZero();
+	setOverflow(preAdd);
 
 	tick();
 	tick();
@@ -195,6 +247,12 @@ void Cpu::addc_zp(void)
 
 void Cpu::addc_zpx(void)
 {
+	u8 preAdd = A;
+    u8 carry = status & CARRY;
+    A += getZeroPageIndexed() + carry;
+	setCarry(preAdd);
+	setZero();
+	setOverflow(preAdd);
 
 	tick();
 	tick();
@@ -204,6 +262,13 @@ void Cpu::addc_zpx(void)
 
 void Cpu::addc_abs(void)
 {
+	u8 preAdd = A;
+    u8 carry = status & CARRY;
+    A += getAbsolute() + carry;
+	setCarry(preAdd);
+	setZero();
+	setOverflow(preAdd);
+
 	tick();
 	tick();
 	tick();
