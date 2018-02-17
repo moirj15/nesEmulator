@@ -3,6 +3,8 @@
 
 #include "utils.h"
 
+namespace Cpu {
+
 enum FLAGS 
 {
 	CARRY = 1,
@@ -13,30 +15,11 @@ enum FLAGS
 	NEGATIVE = 128,
 };
 
-class Cpu
-{
-	// General purpose registers
-	u8 	A;
-	u8 	X;
-	u8 	Y;
+typedef u8 (*address_mode)(void);
 
-	// Special purpose registers
-	u8 	sp;
-	u8 	status;
-	u16 pc;
-
-	u8 memory[0x10000]; // for now allocate the entire address space for the emulator
-
-	const s32 CYCLES_PER_FRAME = 29834;
-	s32 remainingCycles; //borrowed from github/AndreaOrru/LaiNES 
-
-public:
-	Cpu(void);
-	~Cpu(void);
-
+	void init(void);
 	void run(void);
 	
-private:
 	/**
  	 * Run the Cpu for a cycle.
  	 */
@@ -123,9 +106,16 @@ private:
 	void setCarry(u8 preAdd);
 	void setZero(void);
 	void setOverflow(u8 preAdd);
+
+
 	/**
-	 * Add with carry instructions.
+	 * Performs the add with carry instruction with the given addressing mode.
+	 *
+	 * @param mode: The addressing mode function, used to get the operand for
+	 * the addition.
 	 */
+	void addc(address_mode mode);
+	
 	void addc_imm(void);
 	void addc_zp(void);
 	void addc_zpx(void);
@@ -140,7 +130,6 @@ private:
 	 */
 	void nop(void);
 
-};
-
+} // end Cpu namespace
 
 #endif

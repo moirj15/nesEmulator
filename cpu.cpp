@@ -1,5 +1,15 @@
 #include "cpu.h"
 
+namespace Cpu {
+
+// Time saving macros
+#define tick2() tick();tick();
+#define tick3() tick();tick();tick();
+#define tick4() tick();tick();tick();tick();
+#define tick5() tick();tick();tick();tick();tick();
+#define tick6() tick();tick();tick();tick();tick();tick();
+#define tick7() tick();tick();tick();tick();tick();tick();tick();
+
 // Add with carry instructions
 #define ADC_IMM		0x69
 #define ADC_ZP		0x65
@@ -10,9 +20,25 @@
 #define ADC_IND_X	0x61
 #define ADC_IND_Y	0x71
 
-#define NOP		0xEA
+#define NOP			0xEA
 
-Cpu::Cpu(void)
+	// General purpose registers
+static	u8 	A;
+static	u8 	X;
+static	u8 	Y;
+
+// Special purpose registers
+static	u8 	sp;
+static	u8 	status;
+static	u16 pc;
+
+static	u8 memory[0x10000]; // for now allocate the entire address space for the emulator
+
+static	const s32 CYCLES_PER_FRAME = 29834;
+static	s32 remainingCycles; //borrowed from github/AndreaOrru/LaiNES 
+
+
+void init(void)
 {
 	A = 0;
 	X = 0;
@@ -22,12 +48,8 @@ Cpu::Cpu(void)
 	remainingCycles = CYCLES_PER_FRAME;
 }
 
-Cpu::~Cpu(void)
-{
 
-}
-
-void Cpu::run(void)
+void run(void)
 {
 	switch (memory[pc]) {
     case NOP:
@@ -38,7 +60,7 @@ void Cpu::run(void)
 /**
  * Run the Cpu for a cycle.
  */
-void Cpu::tick(void)
+void tick(void)
 {
 	// TODO: call ppu three times since it runs at 3 x the 6502 clock speed
 	// NOTE: the cpu runs at 1.79 MHz which comes down to roughly 29834 cycles
@@ -60,11 +82,11 @@ void Cpu::tick(void)
  *
  * @return: The value found at the next byte.
  */
-u8 Cpu::getImmediate(void)
+u8 getImmediate(void)
 {
-	pc++;
-	u8 ret = memory[pc];
-	pc++;
+	Cpu::pc++;
+	u8 ret = Cpu::memory[Cpu::pc];
+	Cpu::pc++;
 	return ret;
 }
 
@@ -75,7 +97,7 @@ u8 Cpu::getImmediate(void)
  *
  * @return: The value found in the zero page.
  */
-u8 Cpu::getZeroPage(void)
+u8 getZeroPage(void)
 {
 	return getImmediate();
 }
@@ -87,7 +109,7 @@ u8 Cpu::getZeroPage(void)
  *
  * @return: The value found in the zero page.
  */
-u8 Cpu::getZeroPageIndexed(void)
+u8 getZeroPageIndexed(void)
 {
 	return memory[getImmediate() + X];
 }
@@ -98,7 +120,7 @@ u8 Cpu::getZeroPageIndexed(void)
  *
  * @return: The value found at the absolute address.
  */
-u8 Cpu::getAbsolute(void)
+u8 getAbsolute(void)
 {
 	pc++;
 	u16 loc = memory[pc] << 8;
@@ -116,7 +138,7 @@ u8 Cpu::getAbsolute(void)
  *
  * @return: The value found in memory.
  */
-u8 Cpu::getAbsoluteXIndex(void)
+u8 getAbsoluteXIndex(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -139,7 +161,7 @@ u8 Cpu::getAbsoluteXIndex(void)
  *
  * @return: The value found in memory.
  */
-u8 Cpu::getAbsoluteYIndex(void)
+u8 getAbsoluteYIndex(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -162,7 +184,7 @@ u8 Cpu::getAbsoluteYIndex(void)
  *
  * @return: The value found in memory.
  */
-u8 Cpu::getIndexedIndirect(void)
+u8 getIndexedIndirect(void)
 {
 	u8 zp = getImmediate() + X;
 	u16 ret = memory[zp] << 8;
@@ -177,7 +199,7 @@ u8 Cpu::getIndexedIndirect(void)
  *
  * @return: The value found in memory.
  */
-u8 Cpu::getIndirectIndexed(void)
+u8 getIndirectIndexed(void)
 {
 	u8 zp = getImmediate();
 	u16 address = memory[zp] << 8;
@@ -192,7 +214,7 @@ u8 Cpu::getIndirectIndexed(void)
 }
 
 // Flag operations
-void Cpu::setCarry(u8 preAdd)
+void setCarry(u8 preAdd)
 {
     // NOTE: this probably only works for addition, also there may be a
     // simpler method to do this
@@ -201,58 +223,62 @@ void Cpu::setCarry(u8 preAdd)
     }
 }
 
-void Cpu::setZero(void)
+void setZero(void)
 {
     if (!A) {
         status |= ZERO;
     }
 }
 
-void Cpu::setOverflow(u8 preAdd)
+void setOverflow(u8 preAdd)
 {
     if ((status & CARRY) && (A & NEGATIVE)) {
         status |= OVERFLOW;
     }
 }
 
+
+/**
+ * Performs the add with carry instruction with the given addressing mode.
+ *
+ * @param mode: The addressing mode function, used to get the operand for
+ * the addition.
+ */
+void addc(address_mode mode)
+{
+	u8 preAdd = A;
+	u8 carry = status & CARRY;
+	A += mode() + carry;
+	setCarry(preAdd);
+	setZero();
+	setOverflow(preAdd);
+}
+
 /**
  * Add with carry instructions.
  */
-void Cpu::addc_imm(void)
+
+
+void addc_imm(void)
 {
-	u8 preAdd = A;
-	u8 carry = status & CARRY;
-	A += getImmediate() + carry;
-	setCarry(preAdd);
-	setZero();
-	setOverflow(preAdd);
+	addc(getImmediate);
 
 	tick();
 	tick();
 }
 
-void Cpu::addc_zp(void)
+void addc_zp(void)
 {
-	u8 preAdd = A;
-	u8 carry = status & CARRY;
-	A += memory[getImmediate()] + carry;
-	setCarry(preAdd);
-	setZero();
-	setOverflow(preAdd);
+	addc(getZeroPage);
 
 	tick();
 	tick();
 	tick();
 }
 
-void Cpu::addc_zpx(void)
+void addc_zpx(void)
 {
-	u8 preAdd = A;
-    u8 carry = status & CARRY;
-    A += getZeroPageIndexed() + carry;
-	setCarry(preAdd);
-	setZero();
-	setOverflow(preAdd);
+	addc(getZeroPageIndexed);
 
 	tick();
 	tick();
@@ -260,38 +286,31 @@ void Cpu::addc_zpx(void)
 	tick();
 }
 
-void Cpu::addc_abs(void)
+void addc_abs(void)
 {
-	u8 preAdd = A;
-    u8 carry = status & CARRY;
-    A += getAbsolute() + carry;
-	setCarry(preAdd);
-	setZero();
-	setOverflow(preAdd);
-
 	tick();
 	tick();
 	tick();
 	tick();
 }
 
-void Cpu::addc_abs_x(void)
+void addc_abs_x(void)
 {
 	//TODO: check if page is crossed
-
+	
 }
 
-void Cpu::addc_abs_y(void)
+void addc_abs_y(void)
 {
 	//TODO: check if page is crossed
 }
 
-void Cpu::addc_ind_x(void)
+void addc_ind_x(void)
 {
 	//TODO: check if page is crossed
 }
 
-void Cpu::addc_ind_y(void)
+void addc_ind_y(void)
 {
 	//TODO: check if page is crossed
 }
@@ -300,9 +319,25 @@ void Cpu::addc_ind_y(void)
 /**
  * No operation.
  */
-void Cpu::nop(void)
+void nop(void)
 {
 	pc++;
 	tick();
 	tick();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+} // end Cpu namespace
+
+
