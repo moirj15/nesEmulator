@@ -19,6 +19,8 @@ typedef u8 (*address_mode)(void);
 
 	void init(void);
 	void run(void);
+
+	void testCpu(u8 *code, u32 size);
 	
 	/**
  	 * Run the Cpu for a cycle.
@@ -105,9 +107,22 @@ typedef u8 (*address_mode)(void);
 
 	void setCarry(u8 preAdd);
 	void setZero(void);
-	void setOverflow(u8 preAdd);
+	void setOverflow(void);
 
+	// load/store operations
 
+	/**
+	 * Performs the load accumulator instruction with the given addressing mode.
+	 *
+	 * @param mode: The addressing mode function, used to get the operand for
+	 * the store instruction.
+	 */
+	void lda(address_mode mode);
+	void ldx(address_mode mode);
+	void ldy(address_mode mode);
+	void sta(address_mode mode);
+	void stx(address_mode mode);
+	void sty(address_mode mode);
 	/**
 	 * Performs the add with carry instruction with the given addressing mode.
 	 *
@@ -116,14 +131,7 @@ typedef u8 (*address_mode)(void);
 	 */
 	void addc(address_mode mode);
 	
-	void addc_imm(void);
-	void addc_zp(void);
-	void addc_zpx(void);
-	void addc_abs(void);
-	void addc_abs_x(void);
-	void addc_abs_y(void);
-	void addc_ind_x(void);
-	void addc_ind_y(void);
+	
 
 	/**
 	 * No operation.

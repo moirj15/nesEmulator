@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "cpu.h"
 
 namespace Cpu {
@@ -10,10 +12,50 @@ namespace Cpu {
 #define tick6() tick();tick();tick();tick();tick();tick();
 #define tick7() tick();tick();tick();tick();tick();tick();tick();
 
+// Load/Store Operations
+#define LDA_IMM		0xA9
+#define LDA_ZP		0xA5
+#define LDA_ZP_X	0xB5
+#define LDA_ABS		0xAD
+#define LDA_ABS_X	0xBD
+#define LDA_ABS_Y	0xB9
+#define LDA_IND_X	0xA1
+#define LDA_IND_Y	0xB1
+
+#define LDX_IMM		0xA2
+#define LDX_ZP		0xA6
+#define LDX_ZP_Y	0xB6
+#define LDX_ABS		0xAE
+#define LDX_ABS_Y	0xBE
+
+#define LDY_IMM		0xA0
+#define LDY_ZP		0xA4
+#define LDY_ZP_X	0xB4
+#define LDY_ABS		0xAC
+#define LDY_ABS_X	0xBC
+
+#define STA_ZP		0x85
+#define STA_ZP_X	0x95
+#define STA_ABS		0x8D
+#define STA_ABS_X	0x9D
+#define STA_ABS_Y	0x99
+#define STA_IND_X	0x81
+#define STA_IND_Y	0x91
+
+#define STX_ZP		0x86
+#define STX_ZP_Y	0x96
+#define STX_ABS		0x8E
+
+#define STY_ZP		0x84
+#define STY_ZP_X	0x94
+#define STY_ABS		0x8C
+
+// Arithmetic instructions
+
 // Add with carry instructions
 #define ADC_IMM		0x69
 #define ADC_ZP		0x65
-#define ADC_ZPX		0x75
+#define ADC_ZP_X	0x75
 #define ADC_ABS		0x6D
 #define ADC_ABS_X	0x7D
 #define ADC_ABS_Y	0x79
@@ -45,6 +87,7 @@ void init(void)
 	Y = 0;
 	//TODO: set SP and PC
 	status = 0;
+	sp = 0xff;
 	remainingCycles = CYCLES_PER_FRAME;
 }
 
@@ -55,8 +98,64 @@ void run(void)
     case NOP:
         nop();
         break;
+	
+	case ADC_IMM:
+		addc(getImmediate);
+		tick2();
+		break;
+
+	case ADC_ZP:
+		addc(getZeroPage);
+		tick3();
+		break;
+
+	case ADC_ZP_X:
+		addc(getZeroPageIndexed);
+		tick4();
+		break;
+
+	case ADC_ABS:
+		addc(getAbsolute);
+		tick4();
+		break;
+
+	case ADC_ABS_X:
+		addc(getAbsoluteXIndex);
+		tick4();
+		break;
+
+	case ADC_ABS_Y:
+		addc(getAbsoluteYIndex);
+		tick4();
+		break;
+
+	case ADC_IND_X:
+		addc(getIndexedIndirect);
+		tick6();
+		break;
+
+	case ADC_IND_Y:
+		addc(getIndirectIndexed);
+		tick5();
+		break;
+
 	}
 }
+
+void testCpu(u8 *code, u32 size) 
+{
+	memcpy(memory, code, size);
+	while (pc < size) {
+		printf("___________________________________________\n");
+		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
+		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
+		printf("___________________________________________\n");
+
+
+		run();
+	}
+}
+
 /**
  * Run the Cpu for a cycle.
  */
@@ -230,13 +329,48 @@ void setZero(void)
     }
 }
 
-void setOverflow(u8 preAdd)
+void setOverflow(void)
 {
     if ((status & CARRY) && (A & NEGATIVE)) {
         status |= OVERFLOW;
     }
 }
 
+/**
+ * Performs the load accumulator instruction with the given addressing mode.
+ *
+ * @param mode: The addressing mode function, used to get the operand for
+ * the store instruction.
+ */
+void lda(address_mode mode)
+{
+
+}
+
+void ldx(address_mode mode)
+{
+
+}
+
+void ldy(address_mode mode)
+{
+
+}
+
+void sta(address_mode mode)
+{
+
+}
+
+void stx(address_mode mode)
+{
+
+}
+
+void sty(address_mode mode)
+{
+
+}
 
 /**
  * Performs the add with carry instruction with the given addressing mode.
@@ -251,69 +385,9 @@ void addc(address_mode mode)
 	A += mode() + carry;
 	setCarry(preAdd);
 	setZero();
-	setOverflow(preAdd);
+	setOverflow();
 }
 
-/**
- * Add with carry instructions.
- */
-
-
-void addc_imm(void)
-{
-	addc(getImmediate);
-
-	tick();
-	tick();
-}
-
-void addc_zp(void)
-{
-	addc(getZeroPage);
-
-	tick();
-	tick();
-	tick();
-}
-
-void addc_zpx(void)
-{
-	addc(getZeroPageIndexed);
-
-	tick();
-	tick();
-	tick();
-	tick();
-}
-
-void addc_abs(void)
-{
-	tick();
-	tick();
-	tick();
-	tick();
-}
-
-void addc_abs_x(void)
-{
-	//TODO: check if page is crossed
-	
-}
-
-void addc_abs_y(void)
-{
-	//TODO: check if page is crossed
-}
-
-void addc_ind_x(void)
-{
-	//TODO: check if page is crossed
-}
-
-void addc_ind_y(void)
-{
-	//TODO: check if page is crossed
-}
 
 	
 /**
