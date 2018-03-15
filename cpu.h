@@ -40,7 +40,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found at the next byte.
 	 */
-	u8 getImmediate(void);
+	u8 get_immediate(void);
 
 	/**
 	 * Grabs the next byte from program memory and uses that to retrieve a 
@@ -48,7 +48,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in the zero page.
 	 */
-	u8 getZeroPage(void);
+	u8 get_zero_page(void);
 
 	/**
 	 * Grabs the next byte from program memory and adds that to the value found
@@ -57,7 +57,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in the zero page.
 	 */
-	u8 getZeroPageIndexed(void);
+	u8 get_zero_page_indexed(void);
 
 	/**
 	 * Grabs the 16 bit address from the next two bytes and uses that to access
@@ -65,7 +65,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found at the absolute address.
 	 */
-	u8 getAbsolute(void);
+	u8 get_absolute(void);
 
 	/**
 	 * Grabs the 16 bit address from the next two bytes and adds it to the 
@@ -74,7 +74,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in memory.
 	 */
-	u8 getAbsoluteXIndex(void);
+	u8 get_absolute_X_index(void);
 
 	/**
 	 * Grabs the 16 bit address from the next two bytes and adds it to the 
@@ -83,7 +83,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in memory.
 	 */
-	u8 getAbsoluteYIndex(void);
+	u8 get_absolute_Y_index(void);
 
 	/**
 	 * The value in the X register is added to the next byte. This result is
@@ -92,7 +92,7 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in memory.
 	 */
-	u8 getIndexedIndirect(void);
+	u8 get_indexed_indirect(void);
 
 	/**
 	 * Takes the value in the next byte, uses that to retrieve a 16 bit value
@@ -101,13 +101,14 @@ typedef u8 (*address_mode)(void);
 	 *
 	 * @return: The value found in memory.
 	 */
-	u8 getIndirectIndexed(void);
+	u8 get_indirect_indexed(void);
 
 	// Flag operations
 
-	void setCarry(u8 preAdd);
-	void setZero(void);
-	void setOverflow(void);
+	void set_carry(u8 preAdd);
+	void set_zero(u8 reg);
+	void set_overflow(u8 reg);
+	void set_negative(u8 reg);
 
 	// load/store operations
 
@@ -123,6 +124,15 @@ typedef u8 (*address_mode)(void);
 	void sta(address_mode mode);
 	void stx(address_mode mode);
 	void sty(address_mode mode);
+
+	// Register Transfer instructions
+	
+	void tax(address_mode mode);
+	void tay(address_mode mode);
+	void txa(address_mode mode);
+	void tya(address_mode mode);
+
+
 	/**
 	 * Performs the add with carry instruction with the given addressing mode.
 	 *

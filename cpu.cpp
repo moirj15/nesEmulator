@@ -50,6 +50,12 @@ namespace Cpu {
 #define STY_ZP_X	0x94
 #define STY_ABS		0x8C
 
+// Register Transfer instructions
+#define TAX			0xAA
+#define TAY			0xA8
+#define TXA			0x8A
+#define TYA			0x98
+
 // Arithmetic instructions
 
 // Add with carry instructions
@@ -100,42 +106,42 @@ void run(void)
         break;
 	
 	case ADC_IMM:
-		addc(getImmediate);
+		addc(get_immediate);
 		tick2();
 		break;
 
 	case ADC_ZP:
-		addc(getZeroPage);
+		addc(get_zero_page);
 		tick3();
 		break;
 
 	case ADC_ZP_X:
-		addc(getZeroPageIndexed);
+		addc(get_zero_page_indexed);
 		tick4();
 		break;
 
 	case ADC_ABS:
-		addc(getAbsolute);
+		addc(get_absolute);
 		tick4();
 		break;
 
 	case ADC_ABS_X:
-		addc(getAbsoluteXIndex);
+		addc(get_absolute_X_index);
 		tick4();
 		break;
 
 	case ADC_ABS_Y:
-		addc(getAbsoluteYIndex);
+		addc(get_absolute_Y_index);
 		tick4();
 		break;
 
 	case ADC_IND_X:
-		addc(getIndexedIndirect);
+		addc(get_indexed_indirect);
 		tick6();
 		break;
 
 	case ADC_IND_Y:
-		addc(getIndirectIndexed);
+		addc(get_indirect_indexed);
 		tick5();
 		break;
 
@@ -181,7 +187,7 @@ void tick(void)
  *
  * @return: The value found at the next byte.
  */
-u8 getImmediate(void)
+u8 get_immediate(void)
 {
 	Cpu::pc++;
 	u8 ret = Cpu::memory[Cpu::pc];
@@ -196,9 +202,9 @@ u8 getImmediate(void)
  *
  * @return: The value found in the zero page.
  */
-u8 getZeroPage(void)
+u8 get_zero_page(void)
 {
-	return getImmediate();
+	return get_immediate();
 }
 
 /**
@@ -208,9 +214,9 @@ u8 getZeroPage(void)
  *
  * @return: The value found in the zero page.
  */
-u8 getZeroPageIndexed(void)
+u8 get_zero_page_indexed(void)
 {
-	return memory[getImmediate() + X];
+	return memory[get_immediate() + X];
 }
 
 /**
@@ -219,7 +225,7 @@ u8 getZeroPageIndexed(void)
  *
  * @return: The value found at the absolute address.
  */
-u8 getAbsolute(void)
+u8 get_absolute(void)
 {
 	pc++;
 	u16 loc = memory[pc] << 8;
@@ -237,7 +243,7 @@ u8 getAbsolute(void)
  *
  * @return: The value found in memory.
  */
-u8 getAbsoluteXIndex(void)
+u8 get_absolute_X_index(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -260,7 +266,7 @@ u8 getAbsoluteXIndex(void)
  *
  * @return: The value found in memory.
  */
-u8 getAbsoluteYIndex(void)
+u8 get_absolute_Y_index(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -283,9 +289,9 @@ u8 getAbsoluteYIndex(void)
  *
  * @return: The value found in memory.
  */
-u8 getIndexedIndirect(void)
+u8 get_indexed_indirect(void)
 {
-	u8 zp = getImmediate() + X;
+	u8 zp = get_immediate() + X;
 	u16 ret = memory[zp] << 8;
 	ret |= memory[zp + 1];
 	return memory[ret];
@@ -298,9 +304,9 @@ u8 getIndexedIndirect(void)
  *
  * @return: The value found in memory.
  */
-u8 getIndirectIndexed(void)
+u8 get_indirect_indexed(void)
 {
-	u8 zp = getImmediate();
+	u8 zp = get_immediate();
 	u16 address = memory[zp] << 8;
 	address |= memory[zp + 1];
 	address += Y;
@@ -313,7 +319,7 @@ u8 getIndirectIndexed(void)
 }
 
 // Flag operations
-void setCarry(u8 preAdd)
+void set_carry(u8 preAdd)
 {
     // NOTE: this probably only works for addition, also there may be a
     // simpler method to do this
@@ -322,18 +328,25 @@ void setCarry(u8 preAdd)
     }
 }
 
-void setZero(void)
+void set_zero(u8 reg)
 {
-    if (!A) {
+    if (!reg) {
         status |= ZERO;
     }
 }
 
-void setOverflow(void)
+void set_overflow(u8 reg)
 {
-    if ((status & CARRY) && (A & NEGATIVE)) {
+    if ((status & CARRY) && (reg & NEGATIVE)) {
         status |= OVERFLOW;
     }
+}
+
+void set_negative(u8 reg)
+{
+	if (reg & NEGATIVE) {
+		status |= NEGATIVE;
+	}
 }
 
 /**
@@ -344,32 +357,38 @@ void setOverflow(void)
  */
 void lda(address_mode mode)
 {
-
+	A = mode();
+	set_zero(A);
+	set_negative(A);
 }
 
 void ldx(address_mode mode)
 {
-
+	X = mode();
+	set_zero(X);
+	set_negative(X);
 }
 
 void ldy(address_mode mode)
 {
-
+	Y = mode();
+	set_zero(Y);
+	set_negative(Y);
 }
 
 void sta(address_mode mode)
 {
-
+	memory[mode()] = A;
 }
 
 void stx(address_mode mode)
 {
-
+	memory[mode()] = X;
 }
 
 void sty(address_mode mode)
 {
-
+	memory[mode()] = Y;
 }
 
 /**
@@ -383,9 +402,9 @@ void addc(address_mode mode)
 	u8 preAdd = A;
 	u8 carry = status & CARRY;
 	A += mode() + carry;
-	setCarry(preAdd);
-	setZero();
-	setOverflow();
+	set_carry(preAdd);
+	set_zero(A);
+	set_overflow(A);
 }
 
 
