@@ -12,6 +12,7 @@ namespace Cpu {
 #define tick6() tick();tick();tick();tick();tick();tick();
 #define tick7() tick();tick();tick();tick();tick();tick();tick();
 
+
 // Load/Store Operations
 #define LDA_IMM		0xA9
 #define LDA_ZP		0xA5
@@ -56,6 +57,50 @@ namespace Cpu {
 #define TXA			0x8A
 #define TYA			0x98
 
+// Stack operations
+#define TSX			0xBA
+#define TXS			0x9A
+#define PHA			0x48
+#define PHP			0x08
+#define PLA			0x68
+#define PLP			0x28
+
+// Logical operations
+
+// Logical AND instructions
+#define AND_IMM		0x29
+#define AND_ZP		0x25
+#define AND_ZP_X	0x35
+#define AND_ABS		0x2D
+#define AND_ABS_X	0x3D
+#define AND_ABS_Y	0x39
+#define AND_IND_X	0x21
+#define AND_IND_Y	0x31
+
+// Logical exclusive or instructions
+#define EOR_IMM		0x49
+#define EOR_ZP		0x45
+#define EOR_ZP_X	0x55
+#define EOR_ABS		0x4D
+#define EOR_ABS_X	0x5D
+#define EOR_ABS_Y	0x59
+#define EOR_IND_X	0x41
+#define EOR_IND_Y	0x51
+
+// Logical or instructions
+#define ORA_IMM		0x09
+#define ORA_ZP		0x05
+#define ORA_ZP_X	0x15
+#define ORA_ABS		0x0D
+#define ORA_ABS_X	0x1D
+#define ORA_ABS_Y	0x19
+#define ORA_IND_X	0x01
+#define ORA_IND_Y	0x11
+
+// Bit test instructions 
+#define BIT_ZP		0x24
+#define BIT_ABS		0x2C
+
 // Arithmetic instructions
 
 // Add with carry instructions
@@ -67,6 +112,62 @@ namespace Cpu {
 #define ADC_ABS_Y	0x79
 #define ADC_IND_X	0x61
 #define ADC_IND_Y	0x71
+
+// Subtract with carry instructions
+#define SBC_IMM		0xE9
+#define SBC_ZP		0xE5
+#define SBC_ZP_X	0xF5
+#define SBC_ABS		0xED
+#define SBC_ABS_X	0xFD
+#define SBC_ABS_Y	0xF9
+#define SBC_IND_X	0xE1
+#define SBC_IND_Y	0xF1
+
+// Compare instructions
+#define CMP_IMM		0xC9
+#define CMP_ZP		0xC5
+#define CMP_ZP_X	0xD5
+#define CMP_ABS		0xCD
+#define CMP_ABS_X	0xDD
+#define CMP_ABS_Y	0xD9
+#define CMP_IND_X	0xC1
+#define CMP_IND_Y	0xD1
+
+// Compare X Register instructions
+#define CPX_IMM		0xE0
+#define CPX_ZP		0xE4
+#define CPX_ABS		0xEC
+
+// Compare Y Register instructions
+#define CPY_IMM		0xC0
+#define CPY_ZP		0xC4
+#define CPY_ABS		0xCC
+
+// Increment and Decrement instructions
+
+// Increment memory location instructions
+#define INC_ZP		0xE6
+#define INC_ZP_X	0xF6
+#define INC_ABS		0xEE
+#define INC_ABS_X	0xFE
+
+// Increment X register instructions
+#define INX			0xE8
+
+// Increment Y register instructions
+#define INY			0xC8
+
+// Decrement memory location instructions
+#define DEC_ZP		0xC6
+#define DEC_ZP_X	0xC6
+#define DEC_ABS		0xCE
+#define DEC_ABS_X	0xCE
+
+// Decrement X register instructions
+#define DEX			0xCA
+
+// Decrement Y register instructions
+#define DEY			0x88
 
 #define NOP			0xEA
 
@@ -194,7 +295,6 @@ u8 get_immediate(void)
 	Cpu::pc++;
 	return ret;
 }
-
 
 /**
  * Grabs the next byte from program memory and uses that to retrieve a 
