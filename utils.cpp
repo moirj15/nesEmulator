@@ -17,8 +17,12 @@ void quit(const char *qMessage) {
 * @return: The opened file.
 */
 FILE *openFile(const char *dir, const char *permission) {
-	FILE *fp;
-
+	FILE *fp = NULL;
+	fp = fopen(dir, permission);
+    if (!fp) {
+        fprintf(stderr, "Failed to open file %s\n", dir);
+        exit(EXIT_FAILURE);
+    }
 	return fp;
 }
 
@@ -28,5 +32,7 @@ FILE *openFile(const char *dir, const char *permission) {
 * @param fp: The file to close.
 */
 void closeFile(FILE *fp) {
-
+    if (fclose(fp) < 0) {
+        quit("Failed to close file");
+    }
 }
