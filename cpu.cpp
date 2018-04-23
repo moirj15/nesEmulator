@@ -335,46 +335,46 @@ void run(void)
 {
 	switch (memory[pc]) {
     case NOP:
-        nop();
+        nop_op();
         break;
 	
 	case ADC_IMM:
-		addc(get_immediate);
+		adc_op(get_immediate);
 		tick2();
 		break;
 
 	case ADC_ZP:
-		addc(get_zero_page);
+		adc_op(get_zero_page);
 		tick3();
 		break;
 
 	case ADC_ZP_X:
-		addc(get_zero_page_indexed);
+		adc_op(get_zero_page_indexed);
 		tick4();
 		break;
 
 	case ADC_ABS:
-		addc(get_absolute);
+		adc_op(get_absolute);
 		tick4();
 		break;
 
 	case ADC_ABS_X:
-		addc(get_absolute_X_index);
+		adc_op(get_absolute_X_index);
 		tick4();
 		break;
 
 	case ADC_ABS_Y:
-		addc(get_absolute_Y_index);
+		adc_op(get_absolute_Y_index);
 		tick4();
 		break;
 
 	case ADC_IND_X:
-		addc(get_indexed_indirect);
+		adc_op(get_indexed_indirect);
 		tick6();
 		break;
 
 	case ADC_IND_Y:
-		addc(get_indirect_indexed);
+		adc_op(get_indirect_indexed);
 		tick5();
 		break;
 
@@ -587,49 +587,140 @@ void set_negative(u8 reg)
  * @param mode: The addressing mode function, used to get the operand for
  * the store instruction.
  */
-void lda(address_mode mode)
+void lda_op(address_mode mode)
 {
 	A = mode();
 	set_zero(A);
 	set_negative(A);
 }
 
-void ldx(address_mode mode)
+void ldx_op(address_mode mode)
 {
 	X = mode();
 	set_zero(X);
 	set_negative(X);
 }
 
-void ldy(address_mode mode)
+void ldy_op(address_mode mode)
 {
 	Y = mode();
 	set_zero(Y);
 	set_negative(Y);
 }
 
-void sta(address_mode mode)
+void sta_op(address_mode mode)
 {
 	memory[mode()] = A;
 }
 
-void stx(address_mode mode)
+void stx_op(address_mode mode)
 {
 	memory[mode()] = X;
 }
 
-void sty(address_mode mode)
+void sty_op(address_mode mode)
 {
 	memory[mode()] = Y;
 }
 
+//--------------------------------------------------------------------------
+// Register Transfer instructions
+//--------------------------------------------------------------------------
+void tax_op(address_mode mode)
+{
+    
+}
+
+void tay_op(address_mode mode)
+{
+    
+}
+
+void txa_op(address_mode mode)
+{
+    
+}
+
+void tya_op(address_mode mode)
+{
+    
+}
+
+
+
+//--------------------------------------------------------------------------
+// Stack operations
+//--------------------------------------------------------------------------
+
+void tsx_op(address_mode mode)
+{
+    
+}
+
+void txs_op(address_mode mode)
+{
+    
+}
+
+void pha_op(address_mode mode)
+{
+    
+}
+
+void php_op(address_mode mode)
+{
+    
+}
+
+void pla_op(address_mode mode)
+{
+    
+}
+
+void plp_op(address_mode mode)
+{
+    
+}
+
+        
+        
+//------------------------------------------------------------------------------
+// Logical operations
+//------------------------------------------------------------------------------
+void and_op(address_mode mode)
+{
+    
+}
+
+void eor_op(address_mode mode)
+{
+    
+}
+
+void ora_op(address_mode mode)
+{
+    
+}
+
+
+//------------------------------------------------------------------------------
+// Bit test instructions 
+//------------------------------------------------------------------------------
+void bit_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Arithmetic instructions
+//------------------------------------------------------------------------------
 /**
  * Performs the add with carry instruction with the given addressing mode.
  *
  * @param mode: The addressing mode function, used to get the operand for
  * the addition.
  */
-void addc(address_mode mode)
+void adc_op(address_mode mode)
 {
 	u8 preAdd = A;
 	u8 carry = status & CARRY;
@@ -640,17 +731,205 @@ void addc(address_mode mode)
 }
 
 
+void sbc_op(address_mode mode)
+{
+    
+}
+
 	
+//------------------------------------------------------------------------------
+// Compare instructions
+//------------------------------------------------------------------------------
+void cmp_op(address_mode mode)
+{
+    
+}
+
+void cpx_op(address_mode mode)
+{
+    
+}
+
+void cpy_ip(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Increment and Decrement instructions
+//------------------------------------------------------------------------------
+void inc_op(address_mode mode)
+{
+    
+}
+
+void inx_op(address_mode mode)
+{
+    
+}
+
+void iny_op(address_mode mode)
+{
+    
+}
+
+void dec_op(address_mode mode)
+{
+    
+}
+
+void dex_op(address_mode mode)
+{
+    
+}
+
+void dey_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Shift instructions
+//------------------------------------------------------------------------------
+void asl_op(address_mode mode)
+{
+    
+}
+
+void lsr_op(address_mode mode)
+{
+    
+}
+
+void rol_op(address_mode mode)
+{
+    
+}
+
+void ror_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Jump and call instructions
+//------------------------------------------------------------------------------
+void jmp_op(address_mode mode)
+{
+    
+}
+
+void jsr_op(address_mode mode)
+{
+    
+}
+
+void rts_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Branch instructions
+//------------------------------------------------------------------------------
+void bcc_op(address_mode mode)
+{
+    
+}
+
+void bcs_op(address_mode mode)
+{
+    
+}
+
+void beq_op(address_mode mode)
+{
+    
+}
+
+void bmi_op(address_mode mode)
+{
+    
+}
+
+void bne_op(address_mode mode)
+{
+    
+}
+
+void bpl_op(address_mode mode)
+{
+    
+}
+
+void bvc_op(address_mode mode)
+{
+    
+}
+
+void bvs_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// Status flag change instructions
+//------------------------------------------------------------------------------
+void clc_op(address_mode mode)
+{
+    
+}
+
+void cld_op(address_mode mode)
+{
+    
+}
+
+void cli_op(address_mode mode)
+{
+    
+}
+
+void clv_op(address_mode mode)
+{
+    
+}
+
+void sec_op(address_mode mode)
+{
+    
+}
+
+void sed_op(address_mode mode)
+{
+    
+}
+
+void sei_op(address_mode mode)
+{
+    
+}
+
+//------------------------------------------------------------------------------
+// System Functions
+//------------------------------------------------------------------------------
+void brk_op(address_mode mode)
+{
+    
+}
 /**
  * No operation.
  */
-void nop(void)
+void nop_op(void)
 {
 	pc++;
 	tick();
 	tick();
 }
-
+void rti_op(address_mode mode)
+{
+    
+}
 
 
 
