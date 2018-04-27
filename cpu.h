@@ -131,22 +131,22 @@ void sty_op(address_mode mode);
 //--------------------------------------------------------------------------
 // Register Transfer instructions
 //--------------------------------------------------------------------------
-void tax_op(address_mode mode);
-void tay_op(address_mode mode);
-void txa_op(address_mode mode);
-void tya_op(address_mode mode);
+void tax_op(void);
+void tay_op(void);
+void txa_op(void);
+void tya_op(void);
 
 
 //--------------------------------------------------------------------------
 // Stack operations
 //--------------------------------------------------------------------------
 
-void tsx_op(address_mode mode);
-void txs_op(address_mode mode);
-void pha_op(address_mode mode);
-void php_op(address_mode mode);
-void pla_op(address_mode mode);
-void plp_op(address_mode mode);
+void tsx_op(void);
+void txs_op(void);
+void pha_op(void);
+void php_op(void);
+void pla_op(void);
+void plp_op(void);
         
         
 //------------------------------------------------------------------------------
@@ -155,11 +155,8 @@ void plp_op(address_mode mode);
 void and_op(address_mode mode);
 void eor_op(address_mode mode);
 void ora_op(address_mode mode);
-
-//------------------------------------------------------------------------------
-// Bit test instructions 
-//------------------------------------------------------------------------------
 void bit_op(address_mode mode);
+
 //------------------------------------------------------------------------------
 // Arithmetic instructions
 //------------------------------------------------------------------------------
@@ -176,7 +173,7 @@ void sbc_op(address_mode mode);
 //------------------------------------------------------------------------------
 void cmp_op(address_mode mode);
 void cpx_op(address_mode mode);
-void cpy_ip(address_mode mode);
+void cpy_op(address_mode mode);
 //------------------------------------------------------------------------------
 // Increment and Decrement instructions
 //------------------------------------------------------------------------------

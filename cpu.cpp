@@ -423,7 +423,7 @@ void tick(void)
 u8 get_immediate(void)
 {
 	Cpu::pc++;
-	u8 ret = Cpu::memory[Cpu::pc];
+	u8 ret = memory[pc];
 	Cpu::pc++;
 	return ret;
 }
@@ -550,6 +550,7 @@ u8 get_indirect_indexed(void)
     return memory[address];
 }
 
+// TODO: consider converting these to macros
 // Flag operations
 void set_carry(u8 preAdd)
 {
@@ -626,60 +627,74 @@ void sty_op(address_mode mode)
 //--------------------------------------------------------------------------
 // Register Transfer instructions
 //--------------------------------------------------------------------------
-void tax_op(address_mode mode)
+void tax_op(void)
 {
-    
+	X = A;
+    set_zero(X);
+    set_negative(Y);
 }
 
-void tay_op(address_mode mode)
+void tay_op(void)
 {
-    
+    Y = A;
+    set_zero(Y);
+    set_negative(Y);
 }
 
-void txa_op(address_mode mode)
+void txa_op(void)
 {
-    
+    A = X;
+    set_zero(A);
+    set_negative(A);
 }
 
-void tya_op(address_mode mode)
+void tya_op(void)
 {
-    
+	A = Y;
+    set_zero(A);
+    set_negative(A);
 }
-
-
 
 //--------------------------------------------------------------------------
 // Stack operations
 //--------------------------------------------------------------------------
 
-void tsx_op(address_mode mode)
+void tsx_op(void)
 {
-    
+	X = sp;
+    set_zero(X);
+    set_negative(Y);
 }
 
-void txs_op(address_mode mode)
+void txs_op(void)
 {
-    
+	sp = X;    
 }
 
-void pha_op(address_mode mode)
+void pha_op(void)
 {
-    
+    memory[0x0100 + sp] = A;
+    sp--;
 }
 
-void php_op(address_mode mode)
+void php_op(void)
 {
-    
+    memory[0x0100 + sp] = status;
+    sp--;
 }
 
-void pla_op(address_mode mode)
+void pla_op(void)
 {
-    
+    A = memory[0x0100 + sp];
+    sp++;
+    set_zero(A);
+    set_negative(A);
 }
 
-void plp_op(address_mode mode)
+void plp_op(void)
 {
-    
+    status = memory[0x0100 + sp];
+    sp++;
 }
 
         
@@ -689,26 +704,31 @@ void plp_op(address_mode mode)
 //------------------------------------------------------------------------------
 void and_op(address_mode mode)
 {
-    
+    A &= memory[mode()];
+    set_zero(A);
+    set_negative(A);
 }
 
 void eor_op(address_mode mode)
 {
-    
+    A ^= memory[mode()];
+    set_zero(A);
+    set_negative(A);
 }
 
 void ora_op(address_mode mode)
 {
-    
+    A |= memory[mode()];
+    set_zero(A);
+    set_negative(A);
 }
 
-
-//------------------------------------------------------------------------------
-// Bit test instructions 
-//------------------------------------------------------------------------------
 void bit_op(address_mode mode)
 {
-    
+    u8 temp = A & memory[mode()];
+    set_zero(temp);
+    set_overflow(temp);
+    set_negative(temp);
 }
 
 //------------------------------------------------------------------------------
@@ -728,12 +748,19 @@ void adc_op(address_mode mode)
 	set_carry(preAdd);
 	set_zero(A);
 	set_overflow(A);
+    set_negative(A);
 }
 
 
 void sbc_op(address_mode mode)
 {
-    
+	u8 pre_sub = A;
+    u8 carry = status & CARRY;
+    A -= mode() - (1 - carry);
+    set_carry(pre_sub);
+	set_zero(A);
+	set_overflow(A);
+    set_negative(A);
 }
 
 	
@@ -742,17 +769,29 @@ void sbc_op(address_mode mode)
 //------------------------------------------------------------------------------
 void cmp_op(address_mode mode)
 {
-    
+    if (A >= mode()) {
+        status |= CARRY;
+    }
+    set_zero(A);
+    set_negative(A);
 }
 
 void cpx_op(address_mode mode)
 {
-    
+    if (X >= mode()) {
+        status |= CARRY;
+    }
+    set_zero(X);
+    set_negative(X);
 }
 
-void cpy_ip(address_mode mode)
+void cpy_op(address_mode mode)
 {
-    
+    if (Y >= mode()) {
+        status |= CARRY;
+    }
+    set_zero(Y);
+    set_negative(Y);
 }
 
 //------------------------------------------------------------------------------
@@ -930,17 +969,6 @@ void rti_op(address_mode mode)
 {
     
 }
-
-
-
-
-
-
-
-
-
-
-
 
 } // end Cpu namespace
 
