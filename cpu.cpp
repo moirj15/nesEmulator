@@ -420,10 +420,10 @@ void tick(void)
  *
  * @return: The value found at the next byte.
  */
-u8 get_immediate(void)
+u16 get_immediate(void)
 {
 	Cpu::pc++;
-	u8 ret = memory[pc];
+	u16 ret = pc;
 	Cpu::pc++;
 	return ret;
 }
@@ -434,7 +434,7 @@ u8 get_immediate(void)
  *
  * @return: The value found in the zero page.
  */
-u8 get_zero_page(void)
+u16 get_zero_page(void)
 {
 	return get_immediate();
 }
@@ -446,9 +446,9 @@ u8 get_zero_page(void)
  *
  * @return: The value found in the zero page.
  */
-u8 get_zero_page_indexed(void)
+u16 get_zero_page_indexed(void)
 {
-	return memory[get_immediate() + X];
+	return get_immediate() + X;
 }
 
 /**
@@ -457,7 +457,7 @@ u8 get_zero_page_indexed(void)
  *
  * @return: The value found at the absolute address.
  */
-u8 get_absolute(void)
+u16 get_absolute(void)
 {
 	pc++;
 	u16 loc = memory[pc] << 8;
@@ -465,7 +465,7 @@ u8 get_absolute(void)
 	loc |= memory[pc];
 	pc++;
 
-	return memory[loc];
+	return loc;
 }
 
 /**
@@ -475,7 +475,7 @@ u8 get_absolute(void)
  *
  * @return: The value found in memory.
  */
-u8 get_absolute_X_index(void)
+u16 get_absolute_X_index(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -488,7 +488,7 @@ u8 get_absolute_X_index(void)
         tick();	// handle page cross
     }
 
-	return memory[loc + X];
+	return loc + X;
 }
 
 /**
@@ -498,7 +498,7 @@ u8 get_absolute_X_index(void)
  *
  * @return: The value found in memory.
  */
-u8 get_absolute_Y_index(void)
+u16 get_absolute_Y_index(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
@@ -511,7 +511,7 @@ u8 get_absolute_Y_index(void)
         tick();	// handle page cross
     }
 
-	return memory[loc + Y];
+	return loc + Y;
 }
 
 /**
@@ -521,12 +521,12 @@ u8 get_absolute_Y_index(void)
  *
  * @return: The value found in memory.
  */
-u8 get_indexed_indirect(void)
+u16 get_indexed_indirect(void)
 {
 	u8 zp = get_immediate() + X;
 	u16 ret = memory[zp] << 8;
 	ret |= memory[zp + 1];
-	return memory[ret];
+	return ret;
 }
 
 /**
@@ -536,7 +536,7 @@ u8 get_indexed_indirect(void)
  *
  * @return: The value found in memory.
  */
-u8 get_indirect_indexed(void)
+u16 get_indirect_indexed(void)
 {
 	u8 zp = get_immediate();
 	u16 address = memory[zp] << 8;
@@ -547,7 +547,7 @@ u8 get_indirect_indexed(void)
         tick();	// handle page cross
     }
 
-    return memory[address];
+    return address;
 }
 
 // TODO: consider converting these to macros
@@ -557,28 +557,28 @@ void set_carry(u8 preAdd)
     // NOTE: this probably only works for addition, also there may be a
     // simpler method to do this
 	if (preAdd > A) {
-        status |= CARRY;
+        status |= CARRY_FLAG;
     }
 }
 
 void set_zero(u8 reg)
 {
     if (!reg) {
-        status |= ZERO;
+        status |= ZERO_FLAG;
     }
 }
 
 void set_overflow(u8 reg)
 {
-    if ((status & CARRY) && (reg & NEGATIVE)) {
-        status |= OVERFLOW;
+    if ((status & CARRY_FLAG) && (reg & NEGATIVE_FLAG)) {
+        status |= OVERFLOW_FLAG;
     }
 }
 
 void set_negative(u8 reg)
 {
-	if (reg & NEGATIVE) {
-		status |= NEGATIVE;
+	if (reg & NEGATIVE_FLAG) {
+		status |= NEGATIVE_FLAG;
 	}
 }
 
@@ -590,21 +590,21 @@ void set_negative(u8 reg)
  */
 void lda_op(address_mode mode)
 {
-	A = mode();
+	A = memory[mode()];
 	set_zero(A);
 	set_negative(A);
 }
 
 void ldx_op(address_mode mode)
 {
-	X = mode();
+	X = memory[mode()];
 	set_zero(X);
 	set_negative(X);
 }
 
 void ldy_op(address_mode mode)
 {
-	Y = mode();
+	Y = memory[mode()];
 	set_zero(Y);
 	set_negative(Y);
 }
@@ -697,8 +697,6 @@ void plp_op(void)
     sp++;
 }
 
-        
-        
 //------------------------------------------------------------------------------
 // Logical operations
 //------------------------------------------------------------------------------
@@ -743,7 +741,7 @@ void bit_op(address_mode mode)
 void adc_op(address_mode mode)
 {
 	u8 preAdd = A;
-	u8 carry = status & CARRY;
+	u8 carry = status & CARRY_FLAG;
 	A += mode() + carry;
 	set_carry(preAdd);
 	set_zero(A);
@@ -755,7 +753,7 @@ void adc_op(address_mode mode)
 void sbc_op(address_mode mode)
 {
 	u8 pre_sub = A;
-    u8 carry = status & CARRY;
+    u8 carry = status & CARRY_FLAG;
     A -= mode() - (1 - carry);
     set_carry(pre_sub);
 	set_zero(A);
@@ -770,7 +768,7 @@ void sbc_op(address_mode mode)
 void cmp_op(address_mode mode)
 {
     if (A >= mode()) {
-        status |= CARRY;
+        status |= CARRY_FLAG;
     }
     set_zero(A);
     set_negative(A);
@@ -779,7 +777,7 @@ void cmp_op(address_mode mode)
 void cpx_op(address_mode mode)
 {
     if (X >= mode()) {
-        status |= CARRY;
+        status |= CARRY_FLAG;
     }
     set_zero(X);
     set_negative(X);
@@ -788,7 +786,7 @@ void cpx_op(address_mode mode)
 void cpy_op(address_mode mode)
 {
     if (Y >= mode()) {
-        status |= CARRY;
+        status |= CARRY_FLAG;
     }
     set_zero(Y);
     set_negative(Y);
@@ -799,32 +797,44 @@ void cpy_op(address_mode mode)
 //------------------------------------------------------------------------------
 void inc_op(address_mode mode)
 {
-    
+    memory[mode()] += 1;
+    set_zero(memory[mode()]);
+    set_negative(memory[mode()]);
 }
 
 void inx_op(address_mode mode)
 {
-    
+    X++;
+    set_zero(X);
+    set_negative(X);
 }
 
 void iny_op(address_mode mode)
 {
-    
+    Y++;
+    set_zero(Y);
+    set_negative(Y);
 }
 
 void dec_op(address_mode mode)
 {
-    
+    memory[mode()] -= 1;
+    set_zero(memory[mode()]);
+    set_negative(memory[mode()]);
 }
 
 void dex_op(address_mode mode)
 {
-    
+    X--;
+    set_zero(X);
+    set_negative(X);
 }
 
 void dey_op(address_mode mode)
 {
-    
+    Y--;
+    set_zero(Y);
+    set_negative(Y);
 }
 
 //------------------------------------------------------------------------------

@@ -7,15 +7,15 @@ namespace Cpu {
 
 enum FLAGS 
 {
-	CARRY = 1,
-	ZERO = 2,
-	INTERRUPT_DISSABLE = 4,
-	DECIMAL_MODE = 8,
-	OVERFLOW = 64,
-	NEGATIVE = 128,
+	CARRY_FLAG = 1,
+	ZERO_FLAG = 2,
+	INTERRUPT_DISSABLE_FLAG = 4,
+	DECIMAL_MODE_FLAG = 8,
+	OVERFLOW_FLAG = 64,
+	NEGATIVE_FLAG = 128,
 };
 
-typedef u8 (*address_mode)(void);
+typedef u16 (*address_mode)(void);
 
 void init(void);
 void run(void);
@@ -40,7 +40,7 @@ void tick(void);
     *
     * @return: The value found at the next byte.
     */
-u8 get_immediate(void);
+u16 get_immediate(void);
 
 /**
     * Grabs the next byte from program memory and uses that to retrieve a 
@@ -48,7 +48,7 @@ u8 get_immediate(void);
     *
     * @return: The value found in the zero page.
     */
-u8 get_zero_page(void);
+u16 get_zero_page(void);
 
 /**
     * Grabs the next byte from program memory and adds that to the value found
@@ -57,7 +57,7 @@ u8 get_zero_page(void);
     *
     * @return: The value found in the zero page.
     */
-u8 get_zero_page_indexed(void);
+u16 get_zero_page_indexed(void);
 
 /**
     * Grabs the 16 bit address from the next two bytes and uses that to access
@@ -65,7 +65,7 @@ u8 get_zero_page_indexed(void);
     *
     * @return: The value found at the absolute address.
     */
-u8 get_absolute(void);
+u16 get_absolute(void);
 
 /**
     * Grabs the 16 bit address from the next two bytes and adds it to the 
@@ -74,7 +74,7 @@ u8 get_absolute(void);
     *
     * @return: The value found in memory.
     */
-u8 get_absolute_X_index(void);
+u16 get_absolute_X_index(void);
 
 /**
     * Grabs the 16 bit address from the next two bytes and adds it to the 
@@ -83,7 +83,7 @@ u8 get_absolute_X_index(void);
     *
     * @return: The value found in memory.
     */
-u8 get_absolute_Y_index(void);
+u16 get_absolute_Y_index(void);
 
 /**
     * The value in the X register is added to the next byte. This result is
@@ -92,7 +92,7 @@ u8 get_absolute_Y_index(void);
     *
     * @return: The value found in memory.
     */
-u8 get_indexed_indirect(void);
+u16 get_indexed_indirect(void);
 
 /**
     * Takes the value in the next byte, uses that to retrieve a 16 bit value
@@ -101,7 +101,7 @@ u8 get_indexed_indirect(void);
     *
     * @return: The value found in memory.
     */
-u8 get_indirect_indexed(void);
+u16 get_indirect_indexed(void);
 
 // Flag operations
 
