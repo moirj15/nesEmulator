@@ -413,8 +413,6 @@ void tick(void)
 // the program counter and then use the new value in the program counter
 // to get the value that will be used for accessing memory.
 
-//TODO: write better method descriptions.
-
 /**
  * Grabs the immediate value from the next byte in program memory.
  *
@@ -742,7 +740,7 @@ void adc_op(address_mode mode)
 {
 	u8 preAdd = A;
 	u8 carry = status & CARRY_FLAG;
-	A += mode() + carry;
+	A += memory[mode()] + carry;
 	set_carry(preAdd);
 	set_zero(A);
 	set_overflow(A);
@@ -754,7 +752,7 @@ void sbc_op(address_mode mode)
 {
 	u8 pre_sub = A;
     u8 carry = status & CARRY_FLAG;
-    A -= mode() - (1 - carry);
+    A -= memory[mode()] - (1 - carry);
     set_carry(pre_sub);
 	set_zero(A);
 	set_overflow(A);
@@ -767,7 +765,7 @@ void sbc_op(address_mode mode)
 //------------------------------------------------------------------------------
 void cmp_op(address_mode mode)
 {
-    if (A >= mode()) {
+    if (A >= memory[mode()]) {
         status |= CARRY_FLAG;
     }
     set_zero(A);
@@ -776,7 +774,7 @@ void cmp_op(address_mode mode)
 
 void cpx_op(address_mode mode)
 {
-    if (X >= mode()) {
+    if (X >= memory[mode()]) {
         status |= CARRY_FLAG;
     }
     set_zero(X);
@@ -785,7 +783,7 @@ void cpx_op(address_mode mode)
 
 void cpy_op(address_mode mode)
 {
-    if (Y >= mode()) {
+    if (Y >= memory[mode()]) {
         status |= CARRY_FLAG;
     }
     set_zero(Y);
@@ -840,24 +838,49 @@ void dey_op(address_mode mode)
 //------------------------------------------------------------------------------
 // Shift instructions
 //------------------------------------------------------------------------------
+
+// Just gonna implement the accumulator version in the run() function
 void asl_op(address_mode mode)
 {
-    
+    u8 val = memory[mode()];
+    // set carry flag
+    status |= (NEGATIVE_FLAG & val) >> 7;
+    val <<= 1;
+    set_negative(val);
+    set_zero(val);
+    memory[mode()] = val;
 }
 
 void lsr_op(address_mode mode)
 {
-    
+    u8 val = memory[mode()];
+    // set carry flag
+    status |= CARRY_FLAG & val;
+    val >>= 1;
+    set_negative(val);
+    memory[mode()] = val;
 }
 
 void rol_op(address_mode mode)
 {
-    
+	u8 val = memory[mode()];    
+	u8 new_carry = val & 0x08;
+	val = (status & CARRY_FLAG) << 1;
+	set_carry(new_carry);
+	set_negative(val);
+	set_zero(val);
+	memory[mode()] = val;
 }
 
 void ror_op(address_mode mode)
 {
-    
+	u8 val = memory[mode()];    
+	u8 new_carry = val & 0x08;
+	val = (status & CARRY_FLAG) >> 1;
+	set_carry(new_carry);
+	set_negative(val);
+	set_zero(val);
+	memory[mode()] = val;
 }
 
 //------------------------------------------------------------------------------
