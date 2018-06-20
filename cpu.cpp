@@ -12,9 +12,9 @@ namespace Cpu {
 #define tick6() tick();tick();tick();tick();tick();tick();
 #define tick7() tick();tick();tick();tick();tick();tick();tick();
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Load/Store Operations
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // Load accumulator instructions
 #define LDA_IMM		0xA9
@@ -580,6 +580,22 @@ void set_negative(u8 reg)
 	}
 }
 
+void new_page_cycle(u16 old_pc)
+{
+    printf("stub\n");
+}
+
+void do_branch(s8 displacement, bool exp)
+{
+    u16 old_pc = pc;
+    if (exp) {
+        pc += displacement;
+        tick();
+        new_page_cycle(old_pc);
+    }
+}
+
+
 /**
  * Performs the load accumulator instruction with the given addressing mode.
  *
@@ -683,16 +699,16 @@ void php_op(void)
 
 void pla_op(void)
 {
-    A = memory[0x0100 + sp];
     sp++;
+    A = memory[0x0100 + sp];
     set_zero(A);
     set_negative(A);
 }
 
 void plp_op(void)
 {
-    status = memory[0x0100 + sp];
     sp++;
+    status = memory[0x0100 + sp];
 }
 
 //------------------------------------------------------------------------------
@@ -888,60 +904,70 @@ void ror_op(address_mode mode)
 //------------------------------------------------------------------------------
 void jmp_op(address_mode mode)
 {
-    
+    pc = memory[mode()];        
 }
 
 void jsr_op(address_mode mode)
 {
-    
+    memory[0x0100 + sp] = memory[mode()] - 1;
+    sp--;
 }
 
 void rts_op(address_mode mode)
 {
-    
+    sp++;
+    pc = memory[0x0100 + sp];
 }
 
 //------------------------------------------------------------------------------
 // Branch instructions
 //------------------------------------------------------------------------------
-void bcc_op(address_mode mode)
+void bcc_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & CARRY_FLAG)); 
 }
 
-void bcs_op(address_mode mode)
+void bcs_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & CARRY_FLAG)); 
 }
 
-void beq_op(address_mode mode)
+void beq_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & ZERO_FLAG)); 
 }
 
-void bmi_op(address_mode mode)
+void bmi_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & NEGATIVE_FLAG)); 
 }
 
-void bne_op(address_mode mode)
+void bne_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & ZERO_FLAG)); 
 }
 
-void bpl_op(address_mode mode)
+void bpl_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & NEGATIVE_FLAG)); 
 }
 
-void bvc_op(address_mode mode)
+void bvc_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & OVERFLOW_FLAG)); 
 }
 
-void bvs_op(address_mode mode)
+void bvs_op(void)
 {
-    
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & OVERFLOW_FLAG)); 
 }
 
 //------------------------------------------------------------------------------

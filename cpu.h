@@ -23,8 +23,8 @@ namespace Cpu {
     void testCpu(u8 *code, u32 size);
 
     /**
-        * Run the Cpu for a cycle.
-        */
+     * Run the Cpu for a cycle.
+     */
     void tick(void);
 
     // memory access methods
@@ -36,44 +36,44 @@ namespace Cpu {
     //TODO: write better method descriptions.
 
     /**
-        * Grabs the immediate value from the next byte in program memory.
-        *
-        * @return: The value found at the next byte.
-        */
+     * Grabs the immediate value from the next byte in program memory.
+     *
+     * @return: The value found at the next byte.
+     */
     u16 get_immediate(void);
 
     /**
-        * Grabs the next byte from program memory and uses that to retrieve a 
-        * value from the zero page.
-        *
-        * @return: The value found in the zero page.
-        */
+     * Grabs the next byte from program memory and uses that to retrieve a 
+     * value from the zero page.
+     *
+     * @return: The value found in the zero page.
+     */
     u16 get_zero_page(void);
 
     /**
-        * Grabs the next byte from program memory and adds that to the value found
-        * in the X register and uses that new value to retrieve a value from the
-        * zero page.
-        *
-        * @return: The value found in the zero page.
-        */
+     * Grabs the next byte from program memory and adds that to the value found
+     * in the X register and uses that new value to retrieve a value from the
+     * zero page.
+     *
+     * @return: The value found in the zero page.
+     */
     u16 get_zero_page_indexed(void);
 
     /**
-        * Grabs the 16 bit address from the next two bytes and uses that to access
-        * a value in memory.
-        *
-        * @return: The value found at the absolute address.
-        */
+     * Grabs the 16 bit address from the next two bytes and uses that to access
+     * a value in memory.
+     *
+     * @return: The value found at the absolute address.
+     */
     u16 get_absolute(void);
 
     /**
-        * Grabs the 16 bit address from the next two bytes and adds it to the 
-        * value found in the X register and uses the calculated value to fetch a
-        * value from memory.
-        *
-        * @return: The value found in memory.
-        */
+     * Grabs the 16 bit address from the next two bytes and adds it to the 
+     * value found in the X register and uses the calculated value to fetch a
+     * value from memory.
+     *
+     * @return: The value found in memory.
+     */
     u16 get_absolute_X_index(void);
 
     /**
@@ -86,21 +86,21 @@ namespace Cpu {
     u16 get_absolute_Y_index(void);
 
     /**
-        * The value in the X register is added to the next byte. This result is
-        * used to grab a 16 bit value from the zero page which is then used to
-        * access a value in memory.
-        *
-        * @return: The value found in memory.
-        */
+     * The value in the X register is added to the next byte. This result is
+     * used to grab a 16 bit value from the zero page which is then used to
+     * access a value in memory.
+     *
+     * @return: The value found in memory.
+     */
     u16 get_indexed_indirect(void);
 
     /**
-        * Takes the value in the next byte, uses that to retrieve a 16 bit value
-        * from the zero page and adds the value in the Y register to that. The 
-        * result is then used to access a value in memory.
-        *
-        * @return: The value found in memory.
-        */
+     * Takes the value in the next byte, uses that to retrieve a 16 bit value
+     * from the zero page and adds the value in the Y register to that. The 
+     * result is then used to access a value in memory.
+     *
+     * @return: The value found in memory.
+     */
     u16 get_indirect_indexed(void);
 
     // Flag operations
@@ -110,16 +110,14 @@ namespace Cpu {
     void set_overflow(u8 reg);
     void set_negative(u8 reg);
 
+    void new_page_cycle(u16 old_pc);
+    void do_branch(s8 displacement, bool exp);
+
+
     //--------------------------------------------------------------------------
     // Load/Store Operations
     //--------------------------------------------------------------------------
 
-    /**
-        * Performs the load accumulator instruction with the given addressing mode.
-        *
-        * @param mode: The addressing mode function, used to get the operand for
-        * the store instruction.
-        */
     void lda_op(address_mode mode);
     void ldx_op(address_mode mode);
     void ldy_op(address_mode mode);
@@ -199,14 +197,14 @@ namespace Cpu {
     //------------------------------------------------------------------------------
     // Branch instructions
     //------------------------------------------------------------------------------
-    void bcc_op(address_mode mode);
-    void bcs_op(address_mode mode);
-    void beq_op(address_mode mode);
-    void bmi_op(address_mode mode);
-    void bne_op(address_mode mode);
-    void bpl_op(address_mode mode);
-    void bvc_op(address_mode mode);
-    void bvs_op(address_mode mode);
+    void bcc_op(void);
+    void bcs_op(void);
+    void beq_op(void);
+    void bmi_op(void);
+    void bne_op(void);
+    void bpl_op(void);
+    void bvc_op(void);
+    void bvs_op(void);
     //------------------------------------------------------------------------------
     // Status flag change instructions
     //------------------------------------------------------------------------------
