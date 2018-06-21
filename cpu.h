@@ -11,6 +11,7 @@ namespace Cpu {
 	    ZERO_FLAG = 2,
 	    INTERRUPT_DISSABLE_FLAG = 4,
 	    DECIMAL_MODE_FLAG = 8,
+        BREAK_FLAG = 32,
 	    OVERFLOW_FLAG = 64,
 	    NEGATIVE_FLAG = 128,
     };
