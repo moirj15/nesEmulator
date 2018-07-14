@@ -36,6 +36,7 @@ namespace Cpu {
 
     //TODO: write better method descriptions.
 
+    u16 get_accumulator(void);
     /**
      * Grabs the immediate value from the next byte in program memory.
      *
@@ -58,7 +59,9 @@ namespace Cpu {
      *
      * @return: The value found in the zero page.
      */
-    u16 get_zero_page_indexed(void);
+    u16 get_zero_page_x(void);
+
+    u16 get_zero_page_y(void);
 
     /**
      * Grabs the 16 bit address from the next two bytes and uses that to access
@@ -78,13 +81,15 @@ namespace Cpu {
     u16 get_absolute_X_index(void);
 
     /**
-        * Grabs the 16 bit address from the next two bytes and adds it to the 
-        * value found in the y register and uses the calculated value to fetch a
-        * value from memory.
-        *
-        * @return: The value found in memory.
-        */
+     * Grabs the 16 bit address from the next two bytes and adds it to the 
+     * value found in the y register and uses the calculated value to fetch a
+     * value from memory.
+     *
+     * @return: The value found in memory.
+     */
     u16 get_absolute_Y_index(void);
+
+    u16 get_indirect(void);
 
     /**
      * The value in the X register is added to the next byte. This result is
@@ -177,11 +182,11 @@ namespace Cpu {
     // Increment and Decrement instructions
     //------------------------------------------------------------------------------
     void inc_op(address_mode mode);
-    void inx_op(address_mode mode);
-    void iny_op(address_mode mode);
+    void inx_op();
+    void iny_op();
     void dec_op(address_mode mode);
-    void dex_op(address_mode mode);
-    void dey_op(address_mode mode);
+    void dex_op();
+    void dey_op();
     //------------------------------------------------------------------------------
     // Shift instructions
     //------------------------------------------------------------------------------
@@ -193,8 +198,8 @@ namespace Cpu {
     // Jump and call instructions
     //------------------------------------------------------------------------------
     void jmp_op(address_mode mode);
-    void jsr_op(address_mode mode);
-    void rts_op(address_mode mode);
+    void jsr_op(void);
+    void rts_op(void);
     //------------------------------------------------------------------------------
     // Branch instructions
     //------------------------------------------------------------------------------
@@ -209,22 +214,19 @@ namespace Cpu {
     //------------------------------------------------------------------------------
     // Status flag change instructions
     //------------------------------------------------------------------------------
-    void clc_op(address_mode mode);
-    void cld_op(address_mode mode);
-    void cli_op(address_mode mode);
-    void clv_op(address_mode mode);
-    void sec_op(address_mode mode);
-    void sed_op(address_mode mode);
-    void sei_op(address_mode mode);
+    void clc_op(void);
+    void cld_op(void);
+    void cli_op(void);
+    void clv_op(void);
+    void sec_op(void);
+    void sed_op(void);
+    void sei_op(void);
     //------------------------------------------------------------------------------
     // System Functions
     //------------------------------------------------------------------------------
-    void brk_op(address_mode mode);
-    /**
-     * No operation.
-     */
+    void brk_op(void);
     void nop_op(void);
-    void rti_op(address_mode mode);
+    void rti_op(void);
 	
 	
 

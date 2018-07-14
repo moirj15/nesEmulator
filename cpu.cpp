@@ -181,9 +181,9 @@ namespace Cpu {
 
 // Decrement memory location instructions
 #define DEC_ZP		0xC6
-#define DEC_ZP_X	0xC6
+#define DEC_ZP_X	0xD6
 #define DEC_ABS		0xCE
-#define DEC_ABS_X	0xCE
+#define DEC_ABS_X	0xDE
 
 // Decrement X register instructions
 #define DEX			0xCA
@@ -334,10 +334,221 @@ void init(void)
 void run(void)
 {
 	switch (memory[pc]) {
-    case NOP:
-        nop_op();
+
+    case LDA_IMM:
+        lda_op(get_immediate);
         break;
-	
+    case LDA_ZP:
+        lda_op(get_zero_page);
+        break;
+    case LDA_ZP_X:
+        lda_op(get_zero_page_x);
+        break;
+    case LDA_ABS:
+        lda_op(get_absolute);
+        break;
+    case LDA_ABS_X:
+        lda_op(get_absolute_X_index);
+        break;
+    case LDA_ABS_Y:
+        lda_op(get_absolute_Y_index);
+        break;
+    case LDA_IND_X:
+        lda_op(get_indexed_indirect);
+        break;
+    case LDA_IND_Y:
+        lda_op(get_indirect_indexed);
+        break;
+
+    case LDX_IMM:
+        ldx_op(get_immediate);
+        break;
+    case LDX_ZP:
+        ldx_op(get_zero_page);
+        break;
+    case LDX_ZP_Y:
+        ldx_op(get_zero_page_y);
+        break;
+    case LDX_ABS:
+        ldx_op(get_absolute);
+        break;
+    case LDX_ABS_Y:
+        ldx_op(get_absolute_Y_index);
+        break;
+
+
+    case LDY_IMM: 
+        ldy_op(get_immediate);
+        break;
+    case LDY_ZP:	 
+        ldy_op(get_zero_page);
+        break;
+    case LDY_ZP_X: 
+        ldy_op(get_zero_page_x);
+        break;
+    case LDY_ABS:	 
+        ldy_op(get_absolute);
+        break;
+    case LDY_ABS_X:
+        ldy_op(get_absolute_X_index);
+        break;
+
+    case STA_ZP:
+        sta_op(get_zero_page);
+        break;
+    case STA_ZP_X:
+        sta_op(get_zero_page_x);
+        break;
+    case STA_ABS:	 
+        sta_op(get_absolute);
+        break;
+    case STA_ABS_X:
+        sta_op(get_absolute_X_index);
+        break;
+    case STA_ABS_Y:
+        sta_op(get_absolute_Y_index);
+        break;
+    case STA_IND_X:
+        sta_op(get_indexed_indirect);
+        break;
+    case STA_IND_Y:
+        sta_op(get_indirect_indexed);
+        break;
+
+    case STX_ZP:	
+        stx_op(get_zero_page);
+        break;
+    case STX_ZP_Y:
+        stx_op(get_zero_page_y);
+        break;
+    case STX_ABS:	
+        stx_op(get_absolute);
+        break;
+
+    case STY_ZP:	
+        sty_op(get_zero_page);
+        break;
+    case STY_ZP_X:
+        sty_op(get_zero_page_x);
+        break;
+    case STY_ABS:	
+        sty_op(get_absolute);
+        break;
+
+    case TAX:
+        tax_op();
+        break;
+    case TAY:
+        tay_op();
+        break;
+    case TXA:
+        txa_op();
+        break;
+    case TYA:
+        tya_op();
+        break;
+
+    case TSX:
+        tsx_op();
+        break;
+    case TXS:
+        txs_op();
+        break;
+    case PHA:
+        pha_op();
+        break;
+    case PHP:
+        php_op();
+        break;
+    case PLA:
+        pla_op();
+        break;
+    case PLP:
+        plp_op();
+        break;
+
+    case AND_IMM:	 
+        and_op(get_immediate);
+        break;
+    case AND_ZP:	 
+        and_op(get_zero_page);
+        break;
+    case AND_ZP_X: 
+        and_op(get_zero_page_x);
+        break;
+    case AND_ABS:	 
+        and_op(get_absolute);
+        break;
+    case AND_ABS_X:
+        and_op(get_absolute_X_index);
+        break;
+    case AND_ABS_Y:
+        and_op(get_absolute_Y_index);
+        break;
+    case AND_IND_X:
+        and_op(get_indexed_indirect);
+        break;
+    case AND_IND_Y:
+        and_op(get_indirect_indexed);
+        break;
+
+    case EOR_IMM:	 
+        eor_op(get_immediate);
+        break;
+    case EOR_ZP:	 
+        eor_op(get_zero_page);
+        break;
+    case EOR_ZP_X: 
+        eor_op(get_zero_page_x);
+        break;
+    case EOR_ABS:	 
+        eor_op(get_absolute);
+        break;
+    case EOR_ABS_X:
+        eor_op(get_absolute_X_index);
+        break;
+    case EOR_ABS_Y:
+        eor_op(get_absolute_Y_index);
+        break;
+    case EOR_IND_X:
+        eor_op(get_indexed_indirect);
+        break;
+    case EOR_IND_Y:
+        eor_op(get_indirect_indexed);
+        break;
+
+    case ORA_IMM:	 
+        ora_op(get_immediate);
+        break;
+    case ORA_ZP:	 
+        ora_op(get_zero_page);
+        break;
+    case ORA_ZP_X: 
+        ora_op(get_zero_page_x);
+        break;
+    case ORA_ABS:	 
+        ora_op(get_absolute);
+        break;
+    case ORA_ABS_X:
+        ora_op(get_absolute_X_index);
+        break;
+    case ORA_ABS_Y:
+        ora_op(get_absolute_Y_index);
+        break;
+    case ORA_IND_X:
+        ora_op(get_indexed_indirect);
+        break;
+    case ORA_IND_Y:
+        ora_op(get_indirect_indexed);
+        break;
+
+
+    case BIT_ZP: 
+        bit_op(get_zero_page);
+        break;
+    case BIT_ABS:
+        bit_op(get_absolute);
+        break;
 	case ADC_IMM:
 		adc_op(get_immediate);
 		tick2();
@@ -349,7 +560,7 @@ void run(void)
 		break;
 
 	case ADC_ZP_X:
-		adc_op(get_zero_page_indexed);
+		adc_op(get_zero_page_x);
 		tick4();
 		break;
 
@@ -378,6 +589,271 @@ void run(void)
 		tick5();
 		break;
 
+    case SBC_IMM:	 
+        sbc_op(get_immediate);
+        break;
+    case SBC_ZP:	 
+        sbc_op(get_zero_page);
+        break;
+    case SBC_ZP_X: 
+        sbc_op(get_zero_page_x);
+        break;
+    case SBC_ABS:	 
+        sbc_op(get_absolute);
+        break;
+    case SBC_ABS_X:
+        sbc_op(get_absolute_X_index);
+        break;
+    case SBC_ABS_Y:
+        sbc_op(get_absolute_Y_index);
+        break;
+    case SBC_IND_X:
+        sbc_op(get_indexed_indirect);
+        break;
+    case SBC_IND_Y:
+        sbc_op(get_indirect_indexed);
+        break;
+
+    case CMP_IMM:	 
+        sbc_op(get_immediate);
+        break;
+    case CMP_ZP:	 
+        sbc_op(get_zero_page);
+        break;
+    case CMP_ZP_X: 
+        sbc_op(get_zero_page_x);
+        break;
+    case CMP_ABS:	 
+        sbc_op(get_absolute);
+        break;
+    case CMP_ABS_X:
+        sbc_op(get_absolute_X_index);
+        break;
+    case CMP_ABS_Y:
+        sbc_op(get_absolute_Y_index);
+        break;
+    case CMP_IND_X:
+        sbc_op(get_indexed_indirect);
+        break;
+    case CMP_IND_Y:
+        sbc_op(get_indirect_indexed);
+        break;
+
+    case CPX_IMM:
+        cpx_op(get_immediate);
+        break;
+    case CPX_ZP: 
+        cpx_op(get_zero_page);
+        break;
+    case CPX_ABS:
+        cpx_op(get_absolute);
+        break;
+
+    case CPY_IMM:
+        cpy_op(get_immediate);
+        break;
+    case CPY_ZP: 
+        cpy_op(get_zero_page);
+        break;
+    case CPY_ABS:
+        cpy_op(get_absolute);
+        break;
+
+    case INC_ZP:	 
+        inc_op(get_zero_page);
+        break;
+    case INC_ZP_X: 
+        inc_op(get_zero_page_x);
+        break;
+    case INC_ABS:	 
+        inc_op(get_absolute);
+        break;
+    case INC_ABS_X:
+        inc_op(get_absolute_X_index);
+        break;
+
+    case INX:
+        inx_op();
+        break;
+
+    case INY:
+        iny_op();
+        break;
+
+    case DEC_ZP:	 
+        dec_op(get_zero_page);
+        break;
+    case DEC_ZP_X: 
+        dec_op(get_zero_page_x);
+        break;
+    case DEC_ABS:	 
+        dec_op(get_absolute);
+        break;
+    case DEC_ABS_X:
+        dec_op(get_absolute_X_index);
+        break;
+
+    case DEX:
+        dex_op();
+        break;
+
+    case DEY:
+        dey_op();
+        break;
+
+    case ASL_ACC:	 
+        asl_op(get_accumulator);
+        break;
+    case ASL_ZP:	 
+        asl_op(get_zero_page);
+        break;
+    case ASL_ZP_X: 
+        asl_op(get_zero_page_x);
+        break;
+    case ASL_ABS:	 
+        asl_op(get_absolute);
+        break;
+    case ASL_ABS_X:
+        asl_op(get_absolute_X_index);
+        break;
+
+    case LSR_ACC:	 
+        lsr_op(get_accumulator);
+        break;
+    case LSR_ZP:	 
+        lsr_op(get_zero_page);
+        break;
+    case LSR_ZP_X: 
+        lsr_op(get_zero_page_x);
+        break;
+    case LSR_ABS:	 
+        lsr_op(get_absolute);
+        break;
+    case LSR_ABS_X:
+        lsr_op(get_absolute_X_index);
+        break;
+
+    case ROL_ACC:	 
+        rol_op(get_accumulator);
+        break;
+    case ROL_ZP:	 
+        rol_op(get_zero_page);
+        break;
+    case ROL_ZP_X: 
+        rol_op(get_zero_page_x);
+        break;
+    case ROL_ABS:	 
+        rol_op(get_absolute);
+        break;
+    case ROL_ABS_X:
+        rol_op(get_absolute_X_index);
+        break;
+
+    case ROR_ACC:	 
+        ror_op(get_accumulator);
+        break;
+    case ROR_ZP:	 
+        ror_op(get_zero_page);
+        break;
+    case ROR_ZP_X: 
+        ror_op(get_zero_page_x);
+        break;
+    case ROR_ABS:	 
+        ror_op(get_absolute);
+        break;
+    case ROR_ABS_X:
+        ror_op(get_absolute_X_index);
+        break;
+
+    case JMP_ABS:
+        jmp_op(get_absolute);
+        break;
+    case JMP_IND:
+        jmp_op(get_indirect);
+        break;
+
+    case JSR:
+        jsr_op();
+        break;
+
+    case RTS:
+        rts_op();
+        break;
+
+    case BCC:
+        bcc_op();
+        break;
+
+    case BCS:
+        bcs_op();
+        break;
+
+    case BEQ:
+        beq_op();
+        break;
+
+    case BMI:
+        bmi_op();
+        break;
+
+    case BNE:
+        bne_op();
+        break;
+
+    case BPL:			
+        bpl_op();
+        break;
+
+    case BVC:
+        bvc_op();
+        break;
+
+    case BVS:
+        bvs_op();
+        break;
+
+    case CLC:
+        clc_op();
+        break;
+
+    case CLD:
+        cld_op();
+        break;
+
+    case CLI:
+        cli_op();
+        break;
+
+    case CLV:
+        clv_op();
+        break;
+
+    case SEC:
+        sec_op();
+        break;
+
+    case SED:
+        sed_op();
+        break;
+
+    case SEI:
+        sei_op();
+        break;
+
+    case BRK:
+        brk_op();
+        break;
+
+    case RTI:
+        rti_op();
+        break;
+
+    case NOP:
+        nop_op();
+        break;
+	
+    default:
+        break;
 	}
 }
 
@@ -413,6 +889,11 @@ void tick(void)
 // the program counter and then use the new value in the program counter
 // to get the value that will be used for accessing memory.
 
+u16 get_accumulator(void)
+{
+    return A;
+}
+
 /**
  * Grabs the immediate value from the next byte in program memory.
  *
@@ -444,9 +925,14 @@ u16 get_zero_page(void)
  *
  * @return: The value found in the zero page.
  */
-u16 get_zero_page_indexed(void)
+u16 get_zero_page_x(void)
 {
 	return get_immediate() + X;
+}
+
+u16 get_zero_page_y(void)
+{
+    return get_immediate() + Y;
 }
 
 /**
@@ -500,9 +986,9 @@ u16 get_absolute_Y_index(void)
 {
 	// TODO: refractor out the duplicate code
 	pc++;
-	u16 loc = memory[pc] << 8;
+	u16 loc = memory[pc];
 	pc++;
-	loc |= memory[pc];
+	loc |= memory[pc] << 8;
 	pc++;
 
     if ((loc & 0x00FF) + Y > 0x00FF) {
@@ -510,6 +996,14 @@ u16 get_absolute_Y_index(void)
     }
 
 	return loc + Y;
+}
+
+u16 get_indirect(void)
+{
+    u16 loc = get_absolute();
+    u16 dest = memory[loc];
+    dest |= memory[loc + 1] << 8;
+    return dest;
 }
 
 /**
@@ -522,8 +1016,8 @@ u16 get_absolute_Y_index(void)
 u16 get_indexed_indirect(void)
 {
 	u8 zp = get_immediate() + X;
-	u16 ret = memory[zp] << 8;
-	ret |= memory[zp + 1];
+	u16 ret = memory[zp];
+	ret |= memory[zp + 1] << 8;
 	return ret;
 }
 
@@ -816,14 +1310,14 @@ void inc_op(address_mode mode)
     set_negative(memory[mode()]);
 }
 
-void inx_op(address_mode mode)
+void inx_op(void)
 {
     X++;
     set_zero(X);
     set_negative(X);
 }
 
-void iny_op(address_mode mode)
+void iny_op(void)
 {
     Y++;
     set_zero(Y);
@@ -837,14 +1331,14 @@ void dec_op(address_mode mode)
     set_negative(memory[mode()]);
 }
 
-void dex_op(address_mode mode)
+void dex_op(void)
 {
     X--;
     set_zero(X);
     set_negative(X);
 }
 
-void dey_op(address_mode mode)
+void dey_op(void)
 {
     Y--;
     set_zero(Y);
@@ -907,13 +1401,13 @@ void jmp_op(address_mode mode)
     pc = memory[mode()];        
 }
 
-void jsr_op(address_mode mode)
+void jsr_op(void)
 {
-    memory[0x0100 + sp] = memory[mode()] - 1;
+    memory[0x0100 + sp] = memory[get_absolute()] - 1;
     sp--;
 }
 
-void rts_op(address_mode mode)
+void rts_op(void)
 {
     sp++;
     pc = memory[0x0100 + sp];
@@ -973,37 +1467,37 @@ void bvs_op(void)
 //-----------------------------------------------------------------------------
 // Status flag change instructions
 //-----------------------------------------------------------------------------
-void clc_op(address_mode mode)
+void clc_op(void)
 {
     status &= ~CARRY_FLAG;    
 }
 
-void cld_op(address_mode mode)
+void cld_op(void)
 {
     status &= ~DECIMAL_MODE_FLAG;    
 }
 
-void cli_op(address_mode mode)
+void cli_op(void)
 {
     status &= ~INTERRUPT_DISSABLE_FLAG;
 }
 
-void clv_op(address_mode mode)
+void clv_op(void)
 {
     status &= ~OVERFLOW_FLAG;
 }
 
-void sec_op(address_mode mode)
+void sec_op(void)
 {
     status |= CARRY_FLAG;
 }
 
-void sed_op(address_mode mode)
+void sed_op(void)
 {
     status |= DECIMAL_MODE_FLAG;
 }
 
-void sei_op(address_mode mode)
+void sei_op(void)
 {
     status |= INTERRUPT_DISSABLE_FLAG;
 }
@@ -1011,7 +1505,7 @@ void sei_op(address_mode mode)
 //-----------------------------------------------------------------------------
 // System Functions
 //-----------------------------------------------------------------------------
-void brk_op(address_mode mode)
+void brk_op(void)
 {
     status |= BREAK_FLAG;
     memory[sp + 0x0100] = static_cast<u8>(0x0F & pc);
@@ -1024,16 +1518,15 @@ void brk_op(address_mode mode)
     pc = memory[0xFFFE] << 8;
     pc |= memory[0xFFF];
 }
-/**
- * No operation.
- */
+
 void nop_op(void)
 {
 	pc++;
 	tick();
 	tick();
 }
-void rti_op(address_mode mode)
+
+void rti_op(void)
 {
     sp++;
     status = memory[sp + 0x0100];
