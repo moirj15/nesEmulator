@@ -337,218 +337,286 @@ void run(void)
 
     case LDA_IMM:
         lda_op(get_immediate);
+        tick2();
         break;
     case LDA_ZP:
         lda_op(get_zero_page);
+        tick3();
         break;
     case LDA_ZP_X:
         lda_op(get_zero_page_x);
+        tick4();
         break;
     case LDA_ABS:
         lda_op(get_absolute);
+        tick4();
         break;
     case LDA_ABS_X:
         lda_op(get_absolute_X_index);
+        tick4();
         break;
     case LDA_ABS_Y:
         lda_op(get_absolute_Y_index);
+        tick4();
         break;
     case LDA_IND_X:
         lda_op(get_indexed_indirect);
+        tick6();
         break;
     case LDA_IND_Y:
         lda_op(get_indirect_indexed);
+        tick5();
         break;
 
     case LDX_IMM:
         ldx_op(get_immediate);
+        tick2();
         break;
     case LDX_ZP:
         ldx_op(get_zero_page);
+        tick3();
         break;
     case LDX_ZP_Y:
         ldx_op(get_zero_page_y);
+        tick4();
         break;
     case LDX_ABS:
         ldx_op(get_absolute);
+        tick4();
         break;
     case LDX_ABS_Y:
         ldx_op(get_absolute_Y_index);
+        tick4();
         break;
 
 
     case LDY_IMM: 
         ldy_op(get_immediate);
+        tick2();
         break;
     case LDY_ZP:	 
         ldy_op(get_zero_page);
+        tick3();
         break;
     case LDY_ZP_X: 
         ldy_op(get_zero_page_x);
+        tick4();
         break;
     case LDY_ABS:	 
         ldy_op(get_absolute);
+        tick4();
         break;
     case LDY_ABS_X:
         ldy_op(get_absolute_X_index);
+        tick4();
         break;
 
     case STA_ZP:
         sta_op(get_zero_page);
+        tick3();
         break;
     case STA_ZP_X:
         sta_op(get_zero_page_x);
+        tick4();
         break;
     case STA_ABS:	 
         sta_op(get_absolute);
+        tick4();
         break;
     case STA_ABS_X:
         sta_op(get_absolute_X_index);
+        tick5();
         break;
     case STA_ABS_Y:
         sta_op(get_absolute_Y_index);
+        tick5();
         break;
     case STA_IND_X:
         sta_op(get_indexed_indirect);
+        tick6();
         break;
     case STA_IND_Y:
         sta_op(get_indirect_indexed);
+        tick6();
         break;
 
     case STX_ZP:	
         stx_op(get_zero_page);
+        tick3();
         break;
     case STX_ZP_Y:
         stx_op(get_zero_page_y);
+        tick4();
         break;
     case STX_ABS:	
         stx_op(get_absolute);
+        tick4();
         break;
 
     case STY_ZP:	
         sty_op(get_zero_page);
+        tick3();
         break;
     case STY_ZP_X:
         sty_op(get_zero_page_x);
+        tick4();
         break;
     case STY_ABS:	
         sty_op(get_absolute);
+        tick4();
         break;
 
     case TAX:
         tax_op();
+        tick2();
         break;
     case TAY:
         tay_op();
+        tick2();
         break;
     case TXA:
         txa_op();
+        tick2();
         break;
     case TYA:
         tya_op();
+        tick2();
         break;
 
     case TSX:
         tsx_op();
+        tick2();
         break;
     case TXS:
         txs_op();
+        tick2();
         break;
     case PHA:
         pha_op();
+        tick3();
         break;
     case PHP:
         php_op();
+        tick3();    
         break;
     case PLA:
         pla_op();
+        tick4();
         break;
     case PLP:
         plp_op();
+        tick4();
         break;
 
     case AND_IMM:	 
         and_op(get_immediate);
+        tick2();
         break;
     case AND_ZP:	 
         and_op(get_zero_page);
+        tick3();
         break;
     case AND_ZP_X: 
         and_op(get_zero_page_x);
+        tick4();
         break;
     case AND_ABS:	 
         and_op(get_absolute);
+        tick4();
         break;
     case AND_ABS_X:
         and_op(get_absolute_X_index);
+        tick4();
         break;
     case AND_ABS_Y:
         and_op(get_absolute_Y_index);
+        tick4();
         break;
     case AND_IND_X:
         and_op(get_indexed_indirect);
+        tick6();
         break;
     case AND_IND_Y:
         and_op(get_indirect_indexed);
+        tick5();
         break;
 
     case EOR_IMM:	 
         eor_op(get_immediate);
+        tick2();
         break;
     case EOR_ZP:	 
         eor_op(get_zero_page);
+        tick3();
         break;
     case EOR_ZP_X: 
         eor_op(get_zero_page_x);
+        tick4();
         break;
     case EOR_ABS:	 
         eor_op(get_absolute);
+        tick4();
         break;
     case EOR_ABS_X:
         eor_op(get_absolute_X_index);
+        tick4();
         break;
     case EOR_ABS_Y:
         eor_op(get_absolute_Y_index);
+        tick4();
         break;
     case EOR_IND_X:
         eor_op(get_indexed_indirect);
+        tick6();
         break;
     case EOR_IND_Y:
         eor_op(get_indirect_indexed);
+        tick5();
         break;
 
     case ORA_IMM:	 
         ora_op(get_immediate);
+        tick2();
         break;
     case ORA_ZP:	 
         ora_op(get_zero_page);
+        tick3();
         break;
     case ORA_ZP_X: 
         ora_op(get_zero_page_x);
+        tick4();
         break;
     case ORA_ABS:	 
         ora_op(get_absolute);
+        tick4();
         break;
     case ORA_ABS_X:
         ora_op(get_absolute_X_index);
+        tick4();
         break;
     case ORA_ABS_Y:
         ora_op(get_absolute_Y_index);
+        tick4();
         break;
     case ORA_IND_X:
         ora_op(get_indexed_indirect);
+        tick6();
         break;
     case ORA_IND_Y:
         ora_op(get_indirect_indexed);
+        tick5();
         break;
 
 
     case BIT_ZP: 
         bit_op(get_zero_page);
+        tick3();
         break;
     case BIT_ABS:
         bit_op(get_absolute);
+        tick4();
         break;
+
 	case ADC_IMM:
 		adc_op(get_immediate);
 		tick2();
@@ -591,261 +659,336 @@ void run(void)
 
     case SBC_IMM:	 
         sbc_op(get_immediate);
+        tick2();
         break;
     case SBC_ZP:	 
         sbc_op(get_zero_page);
+        tick3();
         break;
     case SBC_ZP_X: 
         sbc_op(get_zero_page_x);
+        tick4();
         break;
     case SBC_ABS:	 
         sbc_op(get_absolute);
+        tick4();
         break;
     case SBC_ABS_X:
         sbc_op(get_absolute_X_index);
+        tick4();
         break;
     case SBC_ABS_Y:
         sbc_op(get_absolute_Y_index);
+        tick4();
         break;
     case SBC_IND_X:
         sbc_op(get_indexed_indirect);
+        tick6();
         break;
     case SBC_IND_Y:
         sbc_op(get_indirect_indexed);
+        tick5();
         break;
 
     case CMP_IMM:	 
         sbc_op(get_immediate);
+        tick2();
         break;
     case CMP_ZP:	 
         sbc_op(get_zero_page);
+        tick3();
         break;
     case CMP_ZP_X: 
         sbc_op(get_zero_page_x);
+        tick4();
         break;
     case CMP_ABS:	 
         sbc_op(get_absolute);
+        tick4();
         break;
     case CMP_ABS_X:
         sbc_op(get_absolute_X_index);
+        tick4();
         break;
     case CMP_ABS_Y:
         sbc_op(get_absolute_Y_index);
+        tick4();
         break;
     case CMP_IND_X:
         sbc_op(get_indexed_indirect);
+        tick6();
         break;
     case CMP_IND_Y:
         sbc_op(get_indirect_indexed);
+        tick5();
         break;
 
     case CPX_IMM:
         cpx_op(get_immediate);
+        tick2();
         break;
     case CPX_ZP: 
         cpx_op(get_zero_page);
+        tick3();
         break;
     case CPX_ABS:
         cpx_op(get_absolute);
+        tick4();
         break;
 
     case CPY_IMM:
         cpy_op(get_immediate);
+        tick2();
         break;
     case CPY_ZP: 
         cpy_op(get_zero_page);
+        tick3();
         break;
     case CPY_ABS:
         cpy_op(get_absolute);
+        tick4();
         break;
 
     case INC_ZP:	 
         inc_op(get_zero_page);
+        tick5();
         break;
     case INC_ZP_X: 
         inc_op(get_zero_page_x);
+        tick6();
         break;
     case INC_ABS:	 
         inc_op(get_absolute);
+        tick6();
         break;
     case INC_ABS_X:
         inc_op(get_absolute_X_index);
+        tick7();
         break;
 
     case INX:
         inx_op();
+        tick2();
         break;
 
     case INY:
         iny_op();
+        tick2();
         break;
 
     case DEC_ZP:	 
         dec_op(get_zero_page);
+        tick5();
         break;
     case DEC_ZP_X: 
         dec_op(get_zero_page_x);
+        tick6();
         break;
     case DEC_ABS:	 
         dec_op(get_absolute);
+        tick6();
         break;
     case DEC_ABS_X:
         dec_op(get_absolute_X_index);
+        tick7();
         break;
 
     case DEX:
         dex_op();
+        tick2();
         break;
 
     case DEY:
         dey_op();
+        tick2();
         break;
 
     case ASL_ACC:	 
         asl_op(get_accumulator);
+        tick2();
         break;
     case ASL_ZP:	 
         asl_op(get_zero_page);
+        tick5();
         break;
     case ASL_ZP_X: 
         asl_op(get_zero_page_x);
+        tick6();
         break;
     case ASL_ABS:	 
         asl_op(get_absolute);
+        tick6();
         break;
     case ASL_ABS_X:
         asl_op(get_absolute_X_index);
+        tick7();
         break;
 
     case LSR_ACC:	 
         lsr_op(get_accumulator);
+        tick2();
         break;
     case LSR_ZP:	 
         lsr_op(get_zero_page);
+        tick5();
         break;
     case LSR_ZP_X: 
         lsr_op(get_zero_page_x);
+        tick6();
         break;
     case LSR_ABS:	 
         lsr_op(get_absolute);
+        tick6();
         break;
     case LSR_ABS_X:
         lsr_op(get_absolute_X_index);
+        tick7();
         break;
 
     case ROL_ACC:	 
         rol_op(get_accumulator);
+        tick2();
         break;
     case ROL_ZP:	 
         rol_op(get_zero_page);
+        tick5();
         break;
     case ROL_ZP_X: 
         rol_op(get_zero_page_x);
+        tick6();
         break;
     case ROL_ABS:	 
         rol_op(get_absolute);
+        tick6();
         break;
     case ROL_ABS_X:
         rol_op(get_absolute_X_index);
+        tick7();
         break;
 
     case ROR_ACC:	 
         ror_op(get_accumulator);
+        tick2();
         break;
     case ROR_ZP:	 
         ror_op(get_zero_page);
+        tick5();
         break;
     case ROR_ZP_X: 
         ror_op(get_zero_page_x);
+        tick6();
         break;
     case ROR_ABS:	 
         ror_op(get_absolute);
+        tick6();
         break;
     case ROR_ABS_X:
         ror_op(get_absolute_X_index);
+        tick7();
         break;
 
     case JMP_ABS:
         jmp_op(get_absolute);
+        tick3();
         break;
     case JMP_IND:
         jmp_op(get_indirect);
+        tick5();
         break;
 
     case JSR:
         jsr_op();
+        tick6();
         break;
 
     case RTS:
         rts_op();
+        tick6();
         break;
 
     case BCC:
         bcc_op();
+        tick2();
         break;
 
     case BCS:
         bcs_op();
+        tick2();
         break;
 
     case BEQ:
         beq_op();
+        tick2();
         break;
 
     case BMI:
         bmi_op();
+        tick2();
         break;
 
     case BNE:
         bne_op();
+        tick2();
         break;
 
     case BPL:			
         bpl_op();
+        tick2();
         break;
 
     case BVC:
         bvc_op();
+        tick2();
         break;
 
     case BVS:
         bvs_op();
+        tick2();
         break;
 
     case CLC:
         clc_op();
+        tick2();
         break;
 
     case CLD:
         cld_op();
+        tick2();
         break;
 
     case CLI:
         cli_op();
+        tick2();
         break;
 
     case CLV:
         clv_op();
+        tick2();
         break;
 
     case SEC:
         sec_op();
+        tick2();
         break;
 
     case SED:
         sed_op();
+        tick2();
         break;
 
     case SEI:
         sei_op();
+        tick2();
         break;
 
     case BRK:
         brk_op();
+        tick7();
         break;
 
     case RTI:
         rti_op();
+        tick6();
         break;
 
     case NOP:
@@ -865,7 +1008,6 @@ void testCpu(u8 *code, u32 size)
 		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
 		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
 		printf("___________________________________________\n");
-
 
 		run();
 	}
