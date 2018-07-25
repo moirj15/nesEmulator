@@ -2,7 +2,7 @@
 #define CPU_H
 
 #include "utils.h"
-
+#include <vector>
 namespace Cpu {
 
     enum FLAGS 
@@ -21,7 +21,7 @@ namespace Cpu {
     void init(void);
     void run(void);
 
-    void testCpu(u8 *code, u32 size);
+    void testCpu(const std::vector<u8> &code);
 
     /**
      * Run the Cpu for a cycle.
@@ -228,9 +228,6 @@ namespace Cpu {
     void nop_op(void);
     void rti_op(void);
 	
-	
-
-
-} // end Cpu namespace
+}	
 
 #endif

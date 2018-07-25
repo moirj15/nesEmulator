@@ -1,6 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
-
+#include <vector>
 #include "cpu.h"
 
 int main(int argc, char **argv)
@@ -8,12 +8,13 @@ int main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 
-	u8 code[] = {
-		0x69, 0x05, 0xEA,
+    std::vector<u8> code;
+    code = {
+        0xa9, 0x01, 0x8d, 0x00, 0x02, 0xa9, 0x05, 0x8d, 0x01, 0x02, 
+        0xa9, 0x08, 0x8d, 0x02, 0x02
 	};
-	u32 size = 3;
 	
-	Cpu::testCpu(code, size);
+	Cpu::testCpu(code);
 	
 	return EXIT_SUCCESS;
 }

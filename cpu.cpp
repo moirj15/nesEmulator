@@ -1000,10 +1000,10 @@ void run(void)
 	}
 }
 
-void testCpu(u8 *code, u32 size) 
+void testCpu(const std::vector<u8> &code) 
 {
-	memcpy(memory, code, size);
-	while (pc < size) {
+	memcpy(memory, code.data(), code.size());
+	while (pc < code.size()) {
 		printf("___________________________________________\n");
 		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
 		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
@@ -1011,6 +1011,11 @@ void testCpu(u8 *code, u32 size)
 
 		run();
 	}
+		printf("___________________________________________\n");
+		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
+		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
+		printf("___________________________________________\n");
+
 }
 
 /**
@@ -1678,6 +1683,5 @@ void rti_op(void)
     pc |= memory[sp + 0x0100];
 }
 
-} // end Cpu namespace
 
-
+}

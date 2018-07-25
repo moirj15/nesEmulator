@@ -2,8 +2,8 @@
 #define  UTILS_H
 
 #include <stdint.h>
-#include <cstdio>
-#include <vector>
+#include <stdio.h>
+#include <stdbool.h>
 
 #define local static
 #define db() printf("hit\n");
