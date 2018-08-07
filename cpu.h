@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include <vector>
+
 namespace Cpu {
 
     enum FLAGS 
@@ -16,10 +17,19 @@ namespace Cpu {
 	    NEGATIVE_FLAG = 128,
     };
 
+
     typedef u16 (*address_mode)(void);
 
     void init(void);
-    void run(void);
+    void step(void);
+
+    // TODO: implement
+    u8 get_regA(void);
+    u8 get_regX(void);
+    u8 get_regY(void);
+    u8 get_status(void);
+    u8 get_sp(void);
+    u16 get_pc(void);
 
     void testCpu(const std::vector<u8> &code);
 
@@ -30,7 +40,7 @@ namespace Cpu {
 
     // memory access methods
     // All memory access methods grab the address from the opCode's operands.
-    // In otherwords, once an opcode is read the memory methods will increment
+    // Once an opcode is read the memory methods will increment
     // the program counter and then use the new value in the program counter
     // to get the value that will be used for accessing memory.
 
@@ -119,115 +129,6 @@ namespace Cpu {
     void new_page_cycle(u16 old_pc);
     void do_branch(s8 displacement, bool exp);
 
-
-    //--------------------------------------------------------------------------
-    // Load/Store Operations
-    //--------------------------------------------------------------------------
-
-    void lda_op(address_mode mode);
-    void ldx_op(address_mode mode);
-    void ldy_op(address_mode mode);
-    void sta_op(address_mode mode);
-    void stx_op(address_mode mode);
-    void sty_op(address_mode mode);
-
-
-    //--------------------------------------------------------------------------
-    // Register Transfer instructions
-    //--------------------------------------------------------------------------
-    void tax_op(void);
-    void tay_op(void);
-    void txa_op(void);
-    void tya_op(void);
-
-
-    //--------------------------------------------------------------------------
-    // Stack operations
-    //--------------------------------------------------------------------------
-
-    void tsx_op(void);
-    void txs_op(void);
-    void pha_op(void);
-    void php_op(void);
-    void pla_op(void);
-    void plp_op(void);
-        
-        
-    //------------------------------------------------------------------------------
-    // Logical operations
-    //------------------------------------------------------------------------------
-    void and_op(address_mode mode);
-    void eor_op(address_mode mode);
-    void ora_op(address_mode mode);
-    void bit_op(address_mode mode);
-
-    //------------------------------------------------------------------------------
-    // Arithmetic instructions
-    //------------------------------------------------------------------------------
-    /**
-     * Performs the add with carry instruction with the given addressing mode.
-     *
-     * @param mode: The addressing mode function, used to get the operand for
-     * the addition.
-     */
-    void adc_op(address_mode mode);
-    void sbc_op(address_mode mode);
-    //------------------------------------------------------------------------------
-    // Compare instructions
-    //------------------------------------------------------------------------------
-    void cmp_op(address_mode mode);
-    void cpx_op(address_mode mode);
-    void cpy_op(address_mode mode);
-    //------------------------------------------------------------------------------
-    // Increment and Decrement instructions
-    //------------------------------------------------------------------------------
-    void inc_op(address_mode mode);
-    void inx_op();
-    void iny_op();
-    void dec_op(address_mode mode);
-    void dex_op();
-    void dey_op();
-    //------------------------------------------------------------------------------
-    // Shift instructions
-    //------------------------------------------------------------------------------
-    void asl_op(address_mode mode);
-    void lsr_op(address_mode mode);
-    void rol_op(address_mode mode);
-    void ror_op(address_mode mode);
-    //------------------------------------------------------------------------------
-    // Jump and call instructions
-    //------------------------------------------------------------------------------
-    void jmp_op(address_mode mode);
-    void jsr_op(void);
-    void rts_op(void);
-    //------------------------------------------------------------------------------
-    // Branch instructions
-    //------------------------------------------------------------------------------
-    void bcc_op(void);
-    void bcs_op(void);
-    void beq_op(void);
-    void bmi_op(void);
-    void bne_op(void);
-    void bpl_op(void);
-    void bvc_op(void);
-    void bvs_op(void);
-    //------------------------------------------------------------------------------
-    // Status flag change instructions
-    //------------------------------------------------------------------------------
-    void clc_op(void);
-    void cld_op(void);
-    void cli_op(void);
-    void clv_op(void);
-    void sec_op(void);
-    void sed_op(void);
-    void sei_op(void);
-    //------------------------------------------------------------------------------
-    // System Functions
-    //------------------------------------------------------------------------------
-    void brk_op(void);
-    void nop_op(void);
-    void rti_op(void);
-	
 }	
 
 #endif

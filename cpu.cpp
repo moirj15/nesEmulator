@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "cpu.h"
+#include "debugger.h"
 
 namespace Cpu {
 
@@ -319,6 +320,477 @@ static	const s32 CYCLES_PER_FRAME = 29834;
 static	s32 remainingCycles; //borrowed from github/AndreaOrru/LaiNES 
 
 
+
+
+/**
+ * Performs the load accumulator instruction with the given addressing mode.
+ *
+ * @param mode: The addressing mode function, used to get the operand for
+ * the store instruction.
+ */
+void lda_op(address_mode mode)
+{
+	A = memory[mode()];
+	set_zero(A);
+	set_negative(A);
+}
+
+void ldx_op(address_mode mode)
+{
+	X = memory[mode()];
+	set_zero(X);
+	set_negative(X);
+}
+
+void ldy_op(address_mode mode)
+{
+	Y = memory[mode()];
+	set_zero(Y);
+	set_negative(Y);
+}
+
+void sta_op(address_mode mode)
+{
+	memory[mode()] = A;
+}
+
+void stx_op(address_mode mode)
+{
+	memory[mode()] = X;
+}
+
+void sty_op(address_mode mode)
+{
+	memory[mode()] = Y;
+}
+
+//--------------------------------------------------------------------------
+// Register Transfer instructions
+//--------------------------------------------------------------------------
+void tax_op(void)
+{
+	X = A;
+    set_zero(X);
+    set_negative(Y);
+    pc++;
+}
+
+void tay_op(void)
+{
+    Y = A;
+    set_zero(Y);
+    set_negative(Y);
+    pc++;
+}
+
+void txa_op(void)
+{
+    A = X;
+    set_zero(A);
+    set_negative(A);
+    pc++;
+}
+
+void tya_op(void)
+{
+	A = Y;
+    set_zero(A);
+    set_negative(A);
+    pc++;
+}
+
+//--------------------------------------------------------------------------
+// Stack operations
+//--------------------------------------------------------------------------
+
+void tsx_op(void)
+{
+	X = sp;
+    set_zero(X);
+    set_negative(Y);
+    pc++;
+}
+
+void txs_op(void)
+{
+	sp = X;    
+    pc++;
+}
+
+void pha_op(void)
+{
+    memory[0x0100 + sp] = A;
+    sp--;
+    pc++;
+}
+
+void php_op(void)
+{
+    memory[0x0100 + sp] = status;
+    sp--;
+    pc++;
+}
+
+void pla_op(void)
+{
+    sp++;
+    A = memory[0x0100 + sp];
+    set_zero(A);
+    set_negative(A);
+    pc++;
+}
+
+void plp_op(void)
+{
+    sp++;
+    status = memory[0x0100 + sp];
+    pc++;
+}
+
+//-----------------------------------------------------------------------------
+// Logical operations
+//-----------------------------------------------------------------------------
+void and_op(address_mode mode)
+{
+    A &= memory[mode()];
+    set_zero(A);
+    set_negative(A);
+}
+
+void eor_op(address_mode mode)
+{
+    A ^= memory[mode()];
+    set_zero(A);
+    set_negative(A);
+}
+
+void ora_op(address_mode mode)
+{
+    A |= memory[mode()];
+    set_zero(A);
+    set_negative(A);
+}
+
+void bit_op(address_mode mode)
+{
+    u8 temp = A & memory[mode()];
+    set_zero(temp);
+    set_overflow(temp);
+    set_negative(temp);
+}
+
+//-----------------------------------------------------------------------------
+// Arithmetic instructions
+//-----------------------------------------------------------------------------
+/**
+ * Performs the add with carry instruction with the given addressing mode.
+ *
+ * @param mode: The addressing mode function, used to get the operand for
+ * the addition.
+ */
+void adc_op(address_mode mode)
+{
+	u8 preAdd = A;
+	u8 carry = status & CARRY_FLAG;
+	A += memory[mode()] + carry;
+	set_carry(preAdd);
+	set_zero(A);
+	set_overflow(A);
+    set_negative(A);
+}
+
+
+void sbc_op(address_mode mode)
+{
+	u8 pre_sub = A;
+    u8 carry = status & CARRY_FLAG;
+    A -= memory[mode()] - (1 - carry);
+    set_carry(pre_sub);
+	set_zero(A);
+	set_overflow(A);
+    set_negative(A);
+}
+
+	
+//-----------------------------------------------------------------------------
+// Compare instructions
+//-----------------------------------------------------------------------------
+void cmp_op(address_mode mode)
+{
+    if (A >= memory[mode()]) {
+        status |= CARRY_FLAG;
+    }
+    set_zero(A);
+    set_negative(A);
+}
+
+void cpx_op(address_mode mode)
+{
+    if (X >= memory[mode()]) {
+        status |= CARRY_FLAG;
+    }
+    set_zero(X);
+    set_negative(X);
+}
+
+void cpy_op(address_mode mode)
+{
+    if (Y >= memory[mode()]) {
+        status |= CARRY_FLAG;
+    }
+    set_zero(Y);
+    set_negative(Y);
+}
+
+//-----------------------------------------------------------------------------
+// Increment and Decrement instructions
+//-----------------------------------------------------------------------------
+void inc_op(address_mode mode)
+{
+    memory[mode()] += 1;
+    set_zero(memory[mode()]);
+    set_negative(memory[mode()]);
+}
+
+void inx_op(void)
+{
+    X++;
+    set_zero(X);
+    set_negative(X);
+    pc++;
+}
+
+void iny_op(void)
+{
+    Y++;
+    set_zero(Y);
+    set_negative(Y);
+    pc++;
+}
+
+void dec_op(address_mode mode)
+{
+    memory[mode()] -= 1;
+    set_zero(memory[mode()]);
+    set_negative(memory[mode()]);
+}
+
+void dex_op(void)
+{
+    X--;
+    set_zero(X);
+    set_negative(X);
+    pc++;
+}
+
+void dey_op(void)
+{
+    Y--;
+    set_zero(Y);
+    set_negative(Y);
+    pc++;
+}
+
+//-----------------------------------------------------------------------------
+// Shift instructions
+//-----------------------------------------------------------------------------
+
+// Just gonna implement the accumulator version in the run() function
+void asl_op(address_mode mode)
+{
+    u8 val = memory[mode()];
+    // set carry flag
+    status |= (NEGATIVE_FLAG & val) >> 7;
+    val <<= 1;
+    set_negative(val);
+    set_zero(val);
+    memory[mode()] = val;
+}
+
+void lsr_op(address_mode mode)
+{
+    u8 val = memory[mode()];
+    // set carry flag
+    status |= CARRY_FLAG & val;
+    val >>= 1;
+    set_negative(val);
+    memory[mode()] = val;
+}
+
+void rol_op(address_mode mode)
+{
+	u8 val = memory[mode()];    
+	u8 new_carry = val & 0x08;
+	val = (status & CARRY_FLAG) << 1;
+	set_carry(new_carry);
+	set_negative(val);
+	set_zero(val);
+	memory[mode()] = val;
+}
+
+void ror_op(address_mode mode)
+{
+	u8 val = memory[mode()];    
+	u8 new_carry = val & 0x08;
+	val = (status & CARRY_FLAG) >> 1;
+	set_carry(new_carry);
+	set_negative(val);
+	set_zero(val);
+	memory[mode()] = val;
+}
+
+//-----------------------------------------------------------------------------
+// Jump and call instructions
+//-----------------------------------------------------------------------------
+void jmp_op(address_mode mode)
+{
+    pc = memory[mode()];        
+}
+
+void jsr_op(void)
+{
+    memory[0x0100 + sp] = memory[get_absolute()] - 1;
+    sp--;
+}
+
+void rts_op(void)
+{
+    sp++;
+    pc = memory[0x0100 + sp];
+    pc += 6;
+}
+
+//-----------------------------------------------------------------------------
+// Branch instructions
+//-----------------------------------------------------------------------------
+void bcc_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & CARRY_FLAG)); 
+}
+
+void bcs_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & CARRY_FLAG)); 
+}
+
+void beq_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & ZERO_FLAG)); 
+}
+
+void bmi_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & NEGATIVE_FLAG)); 
+}
+
+void bne_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & ZERO_FLAG)); 
+    printf("%d\n", !(status & ZERO_FLAG));
+}
+
+void bpl_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & NEGATIVE_FLAG)); 
+}
+
+void bvc_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, !(status & OVERFLOW_FLAG)); 
+}
+
+void bvs_op(void)
+{
+    s8 displacement = static_cast<s8>(get_immediate());    
+    do_branch(displacement, (status & OVERFLOW_FLAG)); 
+}
+
+//-----------------------------------------------------------------------------
+// Status flag change instructions
+//-----------------------------------------------------------------------------
+void clc_op(void)
+{
+    status &= ~CARRY_FLAG;    
+    pc++;
+}
+
+void cld_op(void)
+{
+    status &= ~DECIMAL_MODE_FLAG;    
+    pc++;
+}
+
+void cli_op(void)
+{
+    status &= ~INTERRUPT_DISSABLE_FLAG;
+    pc++;
+}
+
+void clv_op(void)
+{
+    status &= ~OVERFLOW_FLAG;
+    pc++;
+}
+
+void sec_op(void)
+{
+    status |= CARRY_FLAG;
+    pc++;
+}
+
+void sed_op(void)
+{
+    status |= DECIMAL_MODE_FLAG;
+    pc++;
+}
+
+void sei_op(void)
+{
+    status |= INTERRUPT_DISSABLE_FLAG;
+    pc++;
+}
+
+//-----------------------------------------------------------------------------
+// System Functions
+//-----------------------------------------------------------------------------
+void brk_op(void)
+{
+    status |= BREAK_FLAG;
+    memory[sp + 0x0100] = static_cast<u8>(0x0F & pc);
+    sp--;
+    memory[sp + 0x0100] = static_cast<u8>((0xF0 & pc) >> 8);
+    sp--;
+    memory[sp + 0x0100] = status;
+    sp--;
+    // Load the IRQ vector
+    pc = memory[0xFFFE] << 8;
+    pc |= memory[0xFFF];
+}
+
+void nop_op(void)
+{
+	pc++;
+	tick();
+	tick();
+}
+
+void rti_op(void)
+{
+    sp++;
+    status = memory[sp + 0x0100];
+    sp++;
+    pc = memory[sp + 0x0100] << 8;
+    sp++;
+    pc |= memory[sp + 0x0100];
+}
+
 void init(void)
 {
 	A = 0;
@@ -330,8 +802,7 @@ void init(void)
 	remainingCycles = CYCLES_PER_FRAME;
 }
 
-
-void run(void)
+void step(void)
 {
 	switch (memory[pc]) {
 
@@ -1000,22 +1471,53 @@ void run(void)
 	}
 }
 
+
+u8 get_regA(void)
+{
+    return A;
+}
+
+u8 get_regX(void)
+{
+    return X;
+}
+
+u8 get_regY(void)
+{
+    return Y;
+}
+
+u8 get_status(void)
+{
+    return status;
+}
+
+u8 get_sp(void)
+{
+    return sp;
+}
+
+u16 get_pc(void)
+{
+    return pc;
+}
+
+
 void testCpu(const std::vector<u8> &code) 
 {
 	memcpy(memory, code.data(), code.size());
 	while (pc < code.size()) {
 		printf("___________________________________________\n");
-		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
-		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
+		printf("PC: 0x%X | op_code: 0x%X\n", pc, memory[pc]);
+		printf("A: 0x%X | X: 0x%X | Y: 0x%X | sp: 0x%X\n", A, X, Y, sp);
 		printf("___________________________________________\n");
 
-		run();
+		step();
 	}
 		printf("___________________________________________\n");
-		printf("PC: %d | op_code: %X\n", pc, memory[pc]);
-		printf("A: %d | X: %d | Y: %d | sp: %d\n", A, X, Y, sp);
+		printf("PC: 0x%X | op_code: 0x%X\n", pc, memory[pc]);
+		printf("A: 0x%X | X: 0x%X | Y: 0x%X | sp: 0x%X\n", A, X, Y, sp);
 		printf("___________________________________________\n");
-
 }
 
 /**
@@ -1223,465 +1725,22 @@ void set_negative(u8 reg)
 
 void new_page_cycle(u16 old_pc)
 {
-    printf("stub\n");
+    if (pc - old_pc > 100) {
+        printf("%d - %d = %d\n", old_pc + 100, pc,(old_pc + 100) - pc);
+        tick2();
+    }
 }
 
+//TODO: have to redo how the displacement works
 void do_branch(s8 displacement, bool exp)
 {
     u16 old_pc = pc;
+        printf("%d\n", pc);
     if (exp) {
-        pc += displacement;
+        pc = displacement;
+        printf("%d\n", pc);
         tick();
         new_page_cycle(old_pc);
     }
 }
-
-
-/**
- * Performs the load accumulator instruction with the given addressing mode.
- *
- * @param mode: The addressing mode function, used to get the operand for
- * the store instruction.
- */
-void lda_op(address_mode mode)
-{
-	A = memory[mode()];
-	set_zero(A);
-	set_negative(A);
-}
-
-void ldx_op(address_mode mode)
-{
-	X = memory[mode()];
-	set_zero(X);
-	set_negative(X);
-}
-
-void ldy_op(address_mode mode)
-{
-	Y = memory[mode()];
-	set_zero(Y);
-	set_negative(Y);
-}
-
-void sta_op(address_mode mode)
-{
-	memory[mode()] = A;
-}
-
-void stx_op(address_mode mode)
-{
-	memory[mode()] = X;
-}
-
-void sty_op(address_mode mode)
-{
-	memory[mode()] = Y;
-}
-
-//--------------------------------------------------------------------------
-// Register Transfer instructions
-//--------------------------------------------------------------------------
-void tax_op(void)
-{
-	X = A;
-    set_zero(X);
-    set_negative(Y);
-}
-
-void tay_op(void)
-{
-    Y = A;
-    set_zero(Y);
-    set_negative(Y);
-}
-
-void txa_op(void)
-{
-    A = X;
-    set_zero(A);
-    set_negative(A);
-}
-
-void tya_op(void)
-{
-	A = Y;
-    set_zero(A);
-    set_negative(A);
-}
-
-//--------------------------------------------------------------------------
-// Stack operations
-//--------------------------------------------------------------------------
-
-void tsx_op(void)
-{
-	X = sp;
-    set_zero(X);
-    set_negative(Y);
-}
-
-void txs_op(void)
-{
-	sp = X;    
-}
-
-void pha_op(void)
-{
-    memory[0x0100 + sp] = A;
-    sp--;
-}
-
-void php_op(void)
-{
-    memory[0x0100 + sp] = status;
-    sp--;
-}
-
-void pla_op(void)
-{
-    sp++;
-    A = memory[0x0100 + sp];
-    set_zero(A);
-    set_negative(A);
-}
-
-void plp_op(void)
-{
-    sp++;
-    status = memory[0x0100 + sp];
-}
-
-//-----------------------------------------------------------------------------
-// Logical operations
-//-----------------------------------------------------------------------------
-void and_op(address_mode mode)
-{
-    A &= memory[mode()];
-    set_zero(A);
-    set_negative(A);
-}
-
-void eor_op(address_mode mode)
-{
-    A ^= memory[mode()];
-    set_zero(A);
-    set_negative(A);
-}
-
-void ora_op(address_mode mode)
-{
-    A |= memory[mode()];
-    set_zero(A);
-    set_negative(A);
-}
-
-void bit_op(address_mode mode)
-{
-    u8 temp = A & memory[mode()];
-    set_zero(temp);
-    set_overflow(temp);
-    set_negative(temp);
-}
-
-//-----------------------------------------------------------------------------
-// Arithmetic instructions
-//-----------------------------------------------------------------------------
-/**
- * Performs the add with carry instruction with the given addressing mode.
- *
- * @param mode: The addressing mode function, used to get the operand for
- * the addition.
- */
-void adc_op(address_mode mode)
-{
-	u8 preAdd = A;
-	u8 carry = status & CARRY_FLAG;
-	A += memory[mode()] + carry;
-	set_carry(preAdd);
-	set_zero(A);
-	set_overflow(A);
-    set_negative(A);
-}
-
-
-void sbc_op(address_mode mode)
-{
-	u8 pre_sub = A;
-    u8 carry = status & CARRY_FLAG;
-    A -= memory[mode()] - (1 - carry);
-    set_carry(pre_sub);
-	set_zero(A);
-	set_overflow(A);
-    set_negative(A);
-}
-
-	
-//-----------------------------------------------------------------------------
-// Compare instructions
-//-----------------------------------------------------------------------------
-void cmp_op(address_mode mode)
-{
-    if (A >= memory[mode()]) {
-        status |= CARRY_FLAG;
-    }
-    set_zero(A);
-    set_negative(A);
-}
-
-void cpx_op(address_mode mode)
-{
-    if (X >= memory[mode()]) {
-        status |= CARRY_FLAG;
-    }
-    set_zero(X);
-    set_negative(X);
-}
-
-void cpy_op(address_mode mode)
-{
-    if (Y >= memory[mode()]) {
-        status |= CARRY_FLAG;
-    }
-    set_zero(Y);
-    set_negative(Y);
-}
-
-//-----------------------------------------------------------------------------
-// Increment and Decrement instructions
-//-----------------------------------------------------------------------------
-void inc_op(address_mode mode)
-{
-    memory[mode()] += 1;
-    set_zero(memory[mode()]);
-    set_negative(memory[mode()]);
-}
-
-void inx_op(void)
-{
-    X++;
-    set_zero(X);
-    set_negative(X);
-}
-
-void iny_op(void)
-{
-    Y++;
-    set_zero(Y);
-    set_negative(Y);
-}
-
-void dec_op(address_mode mode)
-{
-    memory[mode()] -= 1;
-    set_zero(memory[mode()]);
-    set_negative(memory[mode()]);
-}
-
-void dex_op(void)
-{
-    X--;
-    set_zero(X);
-    set_negative(X);
-}
-
-void dey_op(void)
-{
-    Y--;
-    set_zero(Y);
-    set_negative(Y);
-}
-
-//-----------------------------------------------------------------------------
-// Shift instructions
-//-----------------------------------------------------------------------------
-
-// Just gonna implement the accumulator version in the run() function
-void asl_op(address_mode mode)
-{
-    u8 val = memory[mode()];
-    // set carry flag
-    status |= (NEGATIVE_FLAG & val) >> 7;
-    val <<= 1;
-    set_negative(val);
-    set_zero(val);
-    memory[mode()] = val;
-}
-
-void lsr_op(address_mode mode)
-{
-    u8 val = memory[mode()];
-    // set carry flag
-    status |= CARRY_FLAG & val;
-    val >>= 1;
-    set_negative(val);
-    memory[mode()] = val;
-}
-
-void rol_op(address_mode mode)
-{
-	u8 val = memory[mode()];    
-	u8 new_carry = val & 0x08;
-	val = (status & CARRY_FLAG) << 1;
-	set_carry(new_carry);
-	set_negative(val);
-	set_zero(val);
-	memory[mode()] = val;
-}
-
-void ror_op(address_mode mode)
-{
-	u8 val = memory[mode()];    
-	u8 new_carry = val & 0x08;
-	val = (status & CARRY_FLAG) >> 1;
-	set_carry(new_carry);
-	set_negative(val);
-	set_zero(val);
-	memory[mode()] = val;
-}
-
-//-----------------------------------------------------------------------------
-// Jump and call instructions
-//-----------------------------------------------------------------------------
-void jmp_op(address_mode mode)
-{
-    pc = memory[mode()];        
-}
-
-void jsr_op(void)
-{
-    memory[0x0100 + sp] = memory[get_absolute()] - 1;
-    sp--;
-}
-
-void rts_op(void)
-{
-    sp++;
-    pc = memory[0x0100 + sp];
-}
-
-//-----------------------------------------------------------------------------
-// Branch instructions
-//-----------------------------------------------------------------------------
-void bcc_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, !(status & CARRY_FLAG)); 
-}
-
-void bcs_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, (status & CARRY_FLAG)); 
-}
-
-void beq_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, (status & ZERO_FLAG)); 
-}
-
-void bmi_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, (status & NEGATIVE_FLAG)); 
-}
-
-void bne_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, !(status & ZERO_FLAG)); 
-}
-
-void bpl_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, !(status & NEGATIVE_FLAG)); 
-}
-
-void bvc_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, !(status & OVERFLOW_FLAG)); 
-}
-
-void bvs_op(void)
-{
-    s8 displacement = static_cast<s8>(get_immediate());    
-    do_branch(displacement, (status & OVERFLOW_FLAG)); 
-}
-
-//-----------------------------------------------------------------------------
-// Status flag change instructions
-//-----------------------------------------------------------------------------
-void clc_op(void)
-{
-    status &= ~CARRY_FLAG;    
-}
-
-void cld_op(void)
-{
-    status &= ~DECIMAL_MODE_FLAG;    
-}
-
-void cli_op(void)
-{
-    status &= ~INTERRUPT_DISSABLE_FLAG;
-}
-
-void clv_op(void)
-{
-    status &= ~OVERFLOW_FLAG;
-}
-
-void sec_op(void)
-{
-    status |= CARRY_FLAG;
-}
-
-void sed_op(void)
-{
-    status |= DECIMAL_MODE_FLAG;
-}
-
-void sei_op(void)
-{
-    status |= INTERRUPT_DISSABLE_FLAG;
-}
-
-//-----------------------------------------------------------------------------
-// System Functions
-//-----------------------------------------------------------------------------
-void brk_op(void)
-{
-    status |= BREAK_FLAG;
-    memory[sp + 0x0100] = static_cast<u8>(0x0F & pc);
-    sp--;
-    memory[sp + 0x0100] = static_cast<u8>((0xF0 & pc) >> 8);
-    sp--;
-    memory[sp + 0x0100] = status;
-    sp--;
-    // Load the IRQ vector
-    pc = memory[0xFFFE] << 8;
-    pc |= memory[0xFFF];
-}
-
-void nop_op(void)
-{
-	pc++;
-	tick();
-	tick();
-}
-
-void rti_op(void)
-{
-    sp++;
-    status = memory[sp + 0x0100];
-    sp++;
-    pc = memory[sp + 0x0100] << 8;
-    sp++;
-    pc |= memory[sp + 0x0100];
-}
-
-
 }
