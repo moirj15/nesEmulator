@@ -1,9 +1,28 @@
 #include "debugger.h"
+#include "cpu.h"
 
 #include <string>
 
 std::string Debugger::lookup[0xff] = {""};
-static bool initialized = false;
+bool Debugger::initialized = false;
+
+void Debugger::do_command(u32 command)
+{
+    switch(command) {
+    case STEP:
+        Cpu::step();
+        print_db_info();
+        break;
+    case RUN:
+        break;
+    case QUIT:
+        break;
+
+    default:
+        return;
+    }
+
+}
 
 void Debugger::init_lookup(void)
 {
@@ -159,4 +178,11 @@ std::string Debugger::dissassemble_inst(u8 instruction)
     }
 
     return lookup[instruction];
+}
+
+std::string Debugger::print_db_info(void)
+{
+    std::string ret = "";
+
+    return ret;
 }

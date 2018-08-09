@@ -17,13 +17,12 @@ namespace Cpu {
 	    NEGATIVE_FLAG = 128,
     };
 
-
     typedef u16 (*address_mode)(void);
 
     void init(void);
     void step(void);
 
-    // TODO: implement
+    // getters for the cpu registers.
     u8 get_regA(void);
     u8 get_regX(void);
     u8 get_regY(void);
