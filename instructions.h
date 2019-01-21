@@ -28,12 +28,6 @@ struct OpCode {
     u8 cycle_count;
 };
 
-/**
- * Decodes the given opcode into an OpCode struct.
- * @param op: The opcode.
- * @return: The OpCode object.
- */
-OpCode decode_opcode(u8 op);
-
+extern const OpCode opcodes[256];
 
 #endif
