@@ -60,7 +60,8 @@ static u8 *get_value(u8 *mem, OpCode op) {
         return (u8*)&cpu.a;
     default:
         // TODO
-        break;
+        assert(0);
+        return 0;
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +94,31 @@ static void adc(u8 *mem, OpCode op) {
     cpu.pc++;
 }
 
+static void and_op(u8 *mem, OpCode op) {
+    cpu.a &= *get_value(mem, op);
+
+    cpu.status |= cpu.a & NEGATIVE_FLAG;
+
+    if (cpu.a == 0) {
+        cpu.status |= ZERO_FLAG;
+    }
+
+    cpu.pc++;
+}
+
+static void asl_op(u8 *mem, OpCode op) {
+    u8 *val = get_value(mem, op);
+    // TODO: properly set the overflow flag
+    cpu.status |= cpu.a & 0x80;
+
+    cpu.status |= cpu.a & NEGATIVE_FLAG;
+    if (cpu.a == 0) {
+        cpu.status |= ZERO_FLAG;
+    }
+
+    cpu.pc++;
+}
+
 void init(void) {
     cpu.a = 0;
     cpu.x = 0;
@@ -100,6 +126,11 @@ void init(void) {
     cpu.sp = 0xFF;
     cpu.status = 0;
     cpu.pc = 0xFFFA;
+}
+
+void test_init() {
+    init();
+    cpu.pc = 0;
 }
 
 void step(u8 *mem) {
@@ -110,6 +141,7 @@ void step(u8 *mem) {
         nop();
         break;
 
+    // ADD
     case 0x69:
     case 0x65:
     case 0x75:
@@ -120,8 +152,29 @@ void step(u8 *mem) {
     case 0x71:
         adc(mem, opcodes[op]);
         break;
+
+    case 0x29:
+    case 0x25:
+    case 0x35:
+    case 0x2D:
+    case 0x3D:
+    case 0x39:
+    case 0x21:
+    case 0x31:
+        and_op(mem, opcodes[op]);
+        break;
+
+    case 0x0A:
+    case 0x06:
+    case 0x16:
+    case 0x0E:
+    case 0x1E:
+        asl_op(mem, opcodes[op]);
+        break;
+
     default:
         printf("ILLEGAL OPCODE 0x%X\n", op);
+        assert(0);
         break;
     }
 }
@@ -137,23 +190,23 @@ u8 get_reg_a() {
 }
 
 u8 get_reg_x() {
-
+    return cpu.x;
 }
 
 u8 get_reg_y() {
-
+    return cpu.y;
 }
 
 u8 get_reg_sp() {
-
+    return cpu.sp;
 }
 
 u8 get_reg_status() {
-
+    return cpu.status;
 }
 
-u8 get_reg_pc() {
-
+u16 get_reg_pc() {
+    return cpu.pc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

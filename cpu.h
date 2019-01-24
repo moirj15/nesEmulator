@@ -31,6 +31,8 @@ struct Cpu6502 {
  */
 void init(void);
 
+void test_init();
+
 /**
  * Step through a single instruction.
  */
@@ -49,7 +51,7 @@ u8 get_reg_x();
 u8 get_reg_y();
 u8 get_reg_sp();
 u8 get_reg_status();
-u8 get_reg_pc();
+u16 get_reg_pc();
 
 void test_immediate();
 void test_zero_page();
