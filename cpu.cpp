@@ -68,10 +68,6 @@ static u8 *get_value(u8 *mem, OpCode op) {
 // INSTRUCTION IMPLEMENTATIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-static void nop() {
-    cpu.pc++;
-}
-
 /**
  * Add with carry instruction.
  */
@@ -119,6 +115,216 @@ static void asl_op(u8 *mem, OpCode op) {
     cpu.pc++;
 }
 
+static void bcc_op(u8 *mem, OpCode op) {
+
+}
+
+static void bcs_op(u8 *mem, OpCode op) {
+
+}
+static void beq_op(u8 *mem, OpCode op) {
+
+}
+static void bit_op(u8 *mem, OpCode op) {
+
+}
+static void bmi_op(u8 *mem, OpCode op) {
+
+}
+
+static void bne_op(u8 *mem, OpCode op) {
+
+}
+static void bpl_op(u8 *mem, OpCode op) {
+
+}
+
+static void brk_op(u8 *mem, OpCode op) {
+
+}
+
+static void bvc_op(u8 *mem, OpCode op) {
+
+}
+
+static void bvs_op(u8 *mem, OpCode op) {
+
+}
+
+static void clc_op(u8 *mem, OpCode op) {
+
+}
+
+static void cld_op(u8 *mem, OpCode op) {
+
+}
+
+static void cli_op(u8 *mem, OpCode op) {
+
+}
+
+static void clv_op(u8 *mem, OpCode op) {
+
+}
+
+static void cmp_op(u8 *mem, OpCode op) {
+
+}
+
+static void cpx_op(u8 *mem, OpCode op) {
+
+}
+
+static void cpy_op(u8 *mem, OpCode op) {
+
+}
+
+static void dec_op(u8 *mem, OpCode op) {
+
+}
+
+static void dex_op(u8 *mem, OpCode op) {
+
+}
+
+static void dey_op(u8 *mem, OpCode op) {
+
+}
+
+static void eor_op(u8 *mem, OpCode op) {
+
+}
+
+static void inc_op(u8 *mem, OpCode op) {
+
+}
+
+static void inx_op(u8 *mem, OpCode op) {
+
+}
+
+static void iny_op(u8 *mem, OpCode op) {
+
+}
+
+static void jmp_op(u8 *mem, OpCode op) {
+
+}
+
+static void jsr_op(u8 *mem, OpCode op) {
+
+}
+
+static void lda_op(u8 *mem, OpCode op) {
+
+}
+
+static void ldx_op(u8 *mem, OpCode op) {
+
+}
+
+static void ldy_op(u8 *mem, OpCode op) {
+
+}
+
+static void lsr_op(u8 *mem, OpCode op) {
+
+}
+
+static void nop_op(u8 *mem, OpCode op) {
+    cpu.pc++;
+    (void)mem;
+    (void)op;
+}
+
+static void ora_op(u8 *mem, OpCode op) {
+
+}
+
+static void pha_op(u8 *mem, OpCode op) {
+
+}
+
+static void php_op(u8 *mem, OpCode op) {
+
+}
+
+static void pla_op(u8 *mem, OpCode op) {
+
+}
+
+static void plp_op(u8 *mem, OpCode op) {
+
+}
+
+static void rol_op(u8 *mem, OpCode op) {
+
+}
+
+static void ror_op(u8 *mem, OpCode op) {
+
+}
+
+static void rti_op(u8 *mem, OpCode op) {
+
+}
+
+static void rts_op(u8 *mem, OpCode op) {
+
+}
+
+static void sbc_op(u8 *mem, OpCode op) {
+
+}
+
+static void sec_op(u8 *mem, OpCode op) {
+
+}
+
+static void sed_op(u8 *mem, OpCode op) {
+
+}
+
+static void sei_op(u8 *mem, OpCode op) {
+
+}
+
+static void sta_op(u8 *mem, OpCode op) {
+
+}
+
+static void stx_op(u8 *mem, OpCode op) {
+
+}
+
+static void sty_op(u8 *mem, OpCode op) {
+
+}
+
+static void tax_op(u8 *mem, OpCode op) {
+
+}
+
+static void tay_op(u8 *mem, OpCode op) {
+
+}
+
+static void tsx_op(u8 *mem, OpCode op) {
+
+}
+
+static void txa_op(u8 *mem, OpCode op) {
+
+}
+
+static void txs_op(u8 *mem, OpCode op) {
+
+}
+
+static void txy_op(u8 *mem, OpCode op) {
+
+}
+
 void init(void) {
     cpu.a = 0;
     cpu.x = 0;
@@ -137,41 +343,240 @@ void step(u8 *mem) {
     u8 op = mem[cpu.pc];
     switch (op) {
 
-    case 0xEA:
-        nop();
-        break;
-
     // ADD
-    case 0x69:
-    case 0x65:
-    case 0x75:
-    case 0x6D:
-    case 0x7D:
-    case 0x79:
-    case 0x61:
+    case 0x69:case 0x65:case 0x75:case 0x6D:case 0x7D:case 0x79:case 0x61:
     case 0x71:
         adc(mem, opcodes[op]);
         break;
 
-    case 0x29:
-    case 0x25:
-    case 0x35:
-    case 0x2D:
-    case 0x3D:
-    case 0x39:
-    case 0x21:
+    // AND
+    case 0x29:case 0x25:case 0x35:case 0x2D:case 0x3D:case 0x39:case 0x21:
     case 0x31:
         and_op(mem, opcodes[op]);
         break;
 
-    case 0x0A:
-    case 0x06:
-    case 0x16:
-    case 0x0E:
-    case 0x1E:
+    // ASL
+    case 0x0A:case 0x06:case 0x16:case 0x0E:case 0x1E:
         asl_op(mem, opcodes[op]);
         break;
 
+    case 0x90:
+        bcc_op(mem, opcodes[op]);
+        break;
+
+    case 0xB0:
+        bcs_op(mem, opcodes[op]);
+        break;
+
+    case 0xF0:
+        beq_op(mem, opcodes[op]);
+        break;
+
+    case 0x24:case 0x2C:
+        bit_op(mem, opcodes[op]);
+        break;
+
+    case 0x30:
+        bmi_op(mem, opcodes[op]);
+        break;
+
+    case 0xD0:
+        bne_op(mem, opcodes[op]);
+        break;
+
+    case 0x10:
+        bpl_op(mem, opcodes[op]);
+        break;
+
+    case 0x00:
+        brk_op(mem, opcodes[op]);
+        break;
+
+    case 0x50:
+        bvc_op(mem, opcodes[op]);
+        break;
+
+    case 0x70:
+        bvs_op(mem, opcodes[op]);
+        break;
+
+    case 0x18:
+        clc_op(mem, opcodes[op]);
+        break;
+
+    case 0xD8:
+        cld_op(mem, opcodes[op]);
+        break;
+
+    case 0x58:
+        cli_op(mem, opcodes[op]);
+        break;
+
+    case 0xB8:
+        clv_op(mem, opcodes[op]);
+        break;
+
+    case 0xC9:case 0xC5:case 0xD5:case 0xCD:case 0xDD:case 0xD9:case 0xC1:
+    case 0xD1:
+        cmp_op(mem, opcodes[op]);
+        break;
+
+    case 0xE0:case 0xE4:case 0xEC:
+        cpx_op(mem, opcodes[op]);
+        break;
+
+    case 0xC0:case 0xC4:case 0xCC:
+        cpy_op(mem, opcodes[op]);
+        break;
+
+    case 0xC6:case 0xD6:case 0xCE:case 0xDE:
+        dec_op(mem, opcodes[op]);
+        break;
+
+    case 0xCA:
+        dex_op(mem, opcodes[op]);
+        break;
+
+    case 0x88:
+        dey_op(mem, opcodes[op]);
+        break;
+
+    case 0x49:case 0x45:case 0x55:case 0x4D:case 0x5D:case 0x59:case 0x41:
+    case 0x51:
+        eor_op(mem, opcodes[op]);
+        break;
+
+    case 0xE6:case 0xF6:case 0xEE:case 0xFE:
+        inc_op(mem, opcodes[op]);
+        break;
+
+    case 0xE8:
+        inx_op(mem, opcodes[op]);
+        break;
+
+    case 0xC8:
+        iny_op(mem, opcodes[op]);
+        break;
+
+    case 0x4C:case 0x6C:
+        jmp_op(mem, opcodes[op]);
+        break;
+
+    case 0x20:
+        jsr_op(mem, opcodes[op]);
+        break;
+
+    case 0xA9:case 0xA5:case 0xB5:case 0xAD:case 0xBD:case 0xB9:case 0xA1:
+    case 0xB1:
+        lda_op(mem, opcodes[op]);
+        break;
+
+    case 0xA2:case 0xA6:case 0xB6:case 0xAE:case 0xBE:
+        ldx_op(mem, opcodes[op]);
+        break;
+
+    case 0xA0:case 0xA4:case 0xB4:case 0xAC:case 0xBC:
+        ldy_op(mem, opcodes[op]);
+        break;
+
+    case 0x4A:case 0x46:case 0x56:case 0x4E:case 0x5E:
+        lsr_op(mem, opcodes[op]);
+        break;
+
+    case 0xEA:
+        nop_op(mem, opcodes[op]);
+        break;
+
+    case 0x09:case 0x05:case 0x15:case 0x0D:case 0x1D:case 0x19:case 0x01:
+    case 0x11:
+        ora_op(mem, opcodes[op]);
+        break;
+
+    case 0x48:
+        pha_op(mem, opcodes[op]);
+        break;
+
+    case 0x08:
+        php_op(mem, opcodes[op]);
+        break;
+
+    case 0x68:
+        pla_op(mem, opcodes[op]);
+        break;
+
+    case 0x28:
+        plp_op(mem, opcodes[op]);
+        break;
+
+    case 0x2A:case 0x26:case 0x36:case 0x2E:case 0x3E:
+        rol_op(mem, opcodes[op]);
+        break;
+
+    case 0x6A:case 0x66:case 0x76:case 0x6E:case 0x7E:
+        ror_op(mem, opcodes[op]);
+        break;
+
+    case 0x40:
+        rti_op(mem, opcodes[op]);
+        break;
+
+    case 0x60:
+        rts_op(mem, opcodes[op]);
+        break;
+
+    case 0xE9:case 0xE5:case 0xF5:case 0xED:case 0xFD:case 0xF9:case 0xE1:
+    case 0xF1:
+        sbc_op(mem, opcodes[op]);
+        break;
+
+    case 0x38:
+        sec_op(mem, opcodes[op]);
+        break;
+
+    case 0xF8:
+        sed_op(mem, opcodes[op]);
+        break;
+
+    case 0x78:
+        sei_op(mem, opcodes[op]);
+        break;
+
+    case 0x85:case 0x95:case 0x8D:case 0x9D:case 0x99:case 0x81:case 0x91:
+        sta_op(mem, opcodes[op]);
+        break;
+
+    case 0x86:case 0x96:case 0x8E:
+        stx_op(mem, opcodes[op]);
+        break;
+
+    case 0x84:case 0x94:case 0x8C:
+        sty_op(mem, opcodes[op]);
+        break;
+
+    case 0xAA:
+        tax_op(mem, opcodes[op]);
+        break;
+
+    case 0xA8:
+        tay_op(mem, opcodes[op]);
+        break;
+
+    case 0xBA:
+        tsx_op(mem, opcodes[op]);
+        break;
+
+    case 0x8A:
+        txa_op(mem, opcodes[op]);
+        break;
+
+    case 0x9A:
+        txs_op(mem, opcodes[op]);
+        break;
+
+    case 0x98:
+        txy_op(mem, opcodes[op]);         
+        break;
+      
     default:
         printf("ILLEGAL OPCODE 0x%X\n", op);
         assert(0);

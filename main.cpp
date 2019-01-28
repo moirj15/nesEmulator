@@ -8,10 +8,11 @@
 #include "cpu.h"
 #include "debugger.h"
 
-#define EXPECT_EQ(a, b) assert(a == b)
-#define EXPECT_NEQ(a, b) assert(a != b)
+#define EXPECT_EQ(a, b) assert((a) == (b))
+#define EXPECT_NEQ(a, b) assert((a) != (b))
 
 void addressing_tests() {
+    printf("TESTING ADDRESS MODES\n");
     Cpu::test_immediate();
     Cpu::test_zero_page();
     Cpu::test_zero_page_X();
@@ -24,6 +25,7 @@ void addressing_tests() {
 }
 
 void and_test() {
+    printf("TESTING AND\n");
     Cpu::test_init();
 
     u8 mem[] = {0x29, 0x00};
