@@ -29,39 +29,29 @@ struct Cpu6502 {
 /**
  * Init the cpu to the correct starting values.
  */
-void init(void);
+void init(Cpu6502 *cpu);
 
-void test_init();
+void test_init(Cpu6502 *cpu);
 
 /**
  * Step through a single instruction.
  */
-void step(u8 *mem);
+void step(Cpu6502 *cpu, u8 *mem);
 
 /**
  * Run until the given address is reached.
  */
-void run_until(u8 *mem, u16 address);
+void run_until(Cpu6502 *cpu, u8 *mem, u16 address);
 
-/**
- * Getter for the accumulator.
- */
-u8 get_reg_a();
-u8 get_reg_x();
-u8 get_reg_y();
-u8 get_reg_sp();
-u8 get_reg_status();
-u16 get_reg_pc();
-
-void test_immediate();
-void test_zero_page();
-void test_zero_page_X();
-void test_zero_page_Y();
-void test_absolute();
-void test_absolute_X();
-void test_absolute_Y();
-void test_indexed_indirect();
-void test_indirect_indexed();
+void test_immediate(Cpu6502 *cpu);
+void test_zero_page(Cpu6502 *cpu);
+void test_zero_page_X(Cpu6502 *cpu);
+void test_zero_page_Y(Cpu6502 *cpu);
+void test_absolute(Cpu6502 *cpu);
+void test_absolute_X(Cpu6502 *cpu);
+void test_absolute_Y(Cpu6502 *cpu);
+void test_indexed_indirect(Cpu6502 *cpu);
+void test_indirect_indexed(Cpu6502 *cpu);
 
 
 }	

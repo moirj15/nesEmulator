@@ -6,63 +6,69 @@
 
 namespace Cpu {
 
-static Cpu6502 cpu;
+//static Cpu6502 cpu;
 static const s32 cycles_per_second = 1790000;
 static s32 cycle_count;
 
 /**
  * Get the correct value from memory depending on the opcode addressing mode.
  */
-static u8 *get_value(u8 *mem, OpCode op) {
-    cpu.pc++;
+static u8 &get_value(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    cpu->pc++;
     switch (op.address_mode) {
     case IMMEDIATE:
-        return &mem[cpu.pc];
+        return mem[cpu->pc];
     case ZERO_PAGE:
-        return &mem[mem[cpu.pc]];
+        return mem[mem[cpu->pc]];
     case ZERO_PAGE_X:
-        return &mem[mem[cpu.pc] + cpu.x];
+        return mem[mem[cpu->pc] + cpu->x];
     case ZERO_PAGE_Y:
-        return &mem[mem[cpu.pc] + cpu.y];
+        return mem[mem[cpu->pc] + cpu->y];
     case ABSOLUTE: {
-        u16 address = mem[cpu.pc];
-        cpu.pc++;
-        address |= mem[cpu.pc] << 8;
-        return &mem[address];
+        u16 address = mem[cpu->pc];
+        cpu->pc++;
+        address |= mem[cpu->pc] << 8;
+        return mem[address];
     }
     case ABSOLUTE_X: {
-        u16 address = mem[cpu.pc];
-        cpu.pc++;
-        address |= mem[cpu.pc] << 8;
-        return &mem[address + cpu.x];
+        u16 address = mem[cpu->pc];
+        cpu->pc++;
+        address |= mem[cpu->pc] << 8;
+        return mem[address + cpu->x];
     }
     case ABSOLUTE_Y: {
-        u16 address = mem[cpu.pc];
-        cpu.pc++;
-        address |= mem[cpu.pc] << 8;
-        return &mem[address + cpu.y];
+        u16 address = mem[cpu->pc];
+        cpu->pc++;
+        address |= mem[cpu->pc] << 8;
+        return mem[address + cpu->y];
     }
     case INDEXED_INDIRECT: { // (Indirect, X)
-        u8 low_byte = mem[cpu.pc] + cpu.x;
+        u8 low_byte = mem[cpu->pc] + cpu->x;
         u8 high_byte = low_byte + 1;
         u16 address = mem[low_byte];
         address |= mem[high_byte] << 8;
-        return &mem[address];
+        return mem[address];
     }
     case INDIRECT_INDEXED: { // (Indirect), Y
-        u8 zp_address = mem[cpu.pc];
+        u8 zp_address = mem[cpu->pc];
         u16 address = mem[zp_address];
         zp_address++;
         address |= mem[zp_address] << 8;
-        return &mem[address + cpu.y];
+        return mem[address + cpu->y];
     }
     case ACCUMULATOR:
-        return (u8*)&cpu.a;
-    default:
-        // TODO
-        assert(0);
-        return 0;
+        return *((u8*)&cpu->a);
     }
+}
+
+static void new_page_check(Cpu6502 *cpu, s8 offset) {
+    u16 old_pc = cpu->pc;
+    cpu->pc += offset;
+    s16 page_check = (s16)(old_pc & 0x00FF) + offset;
+    if ((page_check > 0xFF) || (page_check < 0x00)) {
+        cycle_count += 2;
+    }
+
 }
 ////////////////////////////////////////////////////////////////////////////////
 // INSTRUCTION IMPLEMENTATIONS
@@ -71,510 +77,524 @@ static u8 *get_value(u8 *mem, OpCode op) {
 /**
  * Add with carry instruction.
  */
-static void adc(u8 *mem, OpCode op) {
-    u8 overflow_check = cpu.a & 0x80;
-    cpu.a += *get_value(mem, op) + (cpu.status & CARRY_FLAG);
-    if (0x0F00 & cpu.a) {
-        cpu.status |= CARRY_FLAG;
-        cpu.a &= 0x00FF;
+static void adc(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    u8 overflow_check = cpu->a & 0x80;
+    cpu->a += get_value(cpu, mem, op) + (cpu->status & CARRY_FLAG);
+    if (0x0F00 & cpu->a) {
+        cpu->status |= CARRY_FLAG;
+        cpu->a &= 0x00FF;
     }
-    if (cpu.a == 0) {
-        cpu.status |= ZERO_FLAG;
+    if (cpu->a == 0) {
+        cpu->status |= ZERO_FLAG;
     }
-    if (overflow_check != (cpu.a & 0x80)) {
-        cpu.status |= OVERFLOW_FLAG;
+    if (overflow_check != (cpu->a & 0x80)) {
+        cpu->status |= OVERFLOW_FLAG;
     }
     if (overflow_check) {
-        cpu.status |= NEGATIVE_FLAG;
+        cpu->status |= NEGATIVE_FLAG;
     }
-    cpu.pc++;
+    cpu->pc++;
 }
 
-static void and_op(u8 *mem, OpCode op) {
-    cpu.a &= *get_value(mem, op);
+static void and_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    cpu->a &= get_value(cpu, mem, op);
 
-    cpu.status |= cpu.a & NEGATIVE_FLAG;
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
 
-    if (cpu.a == 0) {
-        cpu.status |= ZERO_FLAG;
-    }
-
-    cpu.pc++;
-}
-
-static void asl_op(u8 *mem, OpCode op) {
-    u8 *val = get_value(mem, op);
-    // TODO: properly set the overflow flag
-    cpu.status |= cpu.a & 0x80;
-
-    cpu.status |= cpu.a & NEGATIVE_FLAG;
-    if (cpu.a == 0) {
-        cpu.status |= ZERO_FLAG;
+    if (cpu->a == 0) {
+        cpu->status |= ZERO_FLAG;
     }
 
-    cpu.pc++;
+    cpu->pc++;
 }
 
-static void bcc_op(u8 *mem, OpCode op) {
+static void asl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    u8 &val = get_value(cpu, mem, op);
+    bool old_7thbit = val >> 7;
 
+    val <<= 1;
+
+    if (old_7thbit) {
+        cpu->status |= CARRY_FLAG;
+    }
+    else {
+        cpu->status &= ~((u8)1);
+    }
+    if (!val) {
+        cpu->status |= ZERO_FLAG;
+    }
+    cpu->status |= (val & NEGATIVE_FLAG);
+
+    cpu->pc++;
 }
 
-static void bcs_op(u8 *mem, OpCode op) {
-
-}
-static void beq_op(u8 *mem, OpCode op) {
-
-}
-static void bit_op(u8 *mem, OpCode op) {
-
-}
-static void bmi_op(u8 *mem, OpCode op) {
-
+static void bcc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    cpu->pc++;
+    if (!(cpu->status & CARRY_FLAG)) {
+        s8 offset = mem[cpu->pc];
+        new_page_check(cpu, offset);
+        cycle_count += 2;
+    }
+    cycle_count++;
+    cpu->pc++;
 }
 
-static void bne_op(u8 *mem, OpCode op) {
+static void bcs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
-static void bpl_op(u8 *mem, OpCode op) {
+static void beq_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
-
-static void brk_op(u8 *mem, OpCode op) {
-
-}
-
-static void bvc_op(u8 *mem, OpCode op) {
+static void bit_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
-
-static void bvs_op(u8 *mem, OpCode op) {
-
-}
-
-static void clc_op(u8 *mem, OpCode op) {
-
-}
-
-static void cld_op(u8 *mem, OpCode op) {
-
-}
-
-static void cli_op(u8 *mem, OpCode op) {
+static void bmi_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void clv_op(u8 *mem, OpCode op) {
+static void bne_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+static void bpl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void cmp_op(u8 *mem, OpCode op) {
+static void brk_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void cpx_op(u8 *mem, OpCode op) {
+static void bvc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void cpy_op(u8 *mem, OpCode op) {
+static void bvs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void dec_op(u8 *mem, OpCode op) {
+static void clc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void dex_op(u8 *mem, OpCode op) {
+static void cld_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void dey_op(u8 *mem, OpCode op) {
+static void cli_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void eor_op(u8 *mem, OpCode op) {
+static void clv_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void inc_op(u8 *mem, OpCode op) {
+static void cmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void inx_op(u8 *mem, OpCode op) {
+static void cpx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void iny_op(u8 *mem, OpCode op) {
+static void cpy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void jmp_op(u8 *mem, OpCode op) {
+static void dec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void jsr_op(u8 *mem, OpCode op) {
+static void dex_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void lda_op(u8 *mem, OpCode op) {
+static void dey_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void ldx_op(u8 *mem, OpCode op) {
+static void eor_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void ldy_op(u8 *mem, OpCode op) {
+static void inc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void lsr_op(u8 *mem, OpCode op) {
+static void inx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void nop_op(u8 *mem, OpCode op) {
-    cpu.pc++;
+static void iny_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void jmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void jsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void lda_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void ldx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void ldy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void lsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+
+}
+
+static void nop_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    cpu->pc++;
     (void)mem;
     (void)op;
 }
 
-static void ora_op(u8 *mem, OpCode op) {
+static void ora_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void pha_op(u8 *mem, OpCode op) {
+static void pha_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void php_op(u8 *mem, OpCode op) {
+static void php_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void pla_op(u8 *mem, OpCode op) {
+static void pla_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void plp_op(u8 *mem, OpCode op) {
+static void plp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void rol_op(u8 *mem, OpCode op) {
+static void rol_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void ror_op(u8 *mem, OpCode op) {
+static void ror_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void rti_op(u8 *mem, OpCode op) {
+static void rti_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void rts_op(u8 *mem, OpCode op) {
+static void rts_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sbc_op(u8 *mem, OpCode op) {
+static void sbc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sec_op(u8 *mem, OpCode op) {
+static void sec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sed_op(u8 *mem, OpCode op) {
+static void sed_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sei_op(u8 *mem, OpCode op) {
+static void sei_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sta_op(u8 *mem, OpCode op) {
+static void sta_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void stx_op(u8 *mem, OpCode op) {
+static void stx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void sty_op(u8 *mem, OpCode op) {
+static void sty_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void tax_op(u8 *mem, OpCode op) {
+static void tax_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void tay_op(u8 *mem, OpCode op) {
+static void tay_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void tsx_op(u8 *mem, OpCode op) {
+static void tsx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void txa_op(u8 *mem, OpCode op) {
+static void txa_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void txs_op(u8 *mem, OpCode op) {
+static void txs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-static void txy_op(u8 *mem, OpCode op) {
+static void txy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 }
 
-void init(void) {
-    cpu.a = 0;
-    cpu.x = 0;
-    cpu.y = 0;
-    cpu.sp = 0xFF;
-    cpu.status = 0;
-    cpu.pc = 0xFFFA;
+void init(Cpu6502 *cpu) {
+    cpu->a = 0;
+    cpu->x = 0;
+    cpu->y = 0;
+    cpu->sp = 0xFF;
+    cpu->status = 0;
+    cpu->pc = 0xFFFA;
 }
 
-void test_init() {
-    init();
-    cpu.pc = 0;
+void test_init(Cpu6502 *cpu) {
+    init(cpu);
+    cpu->pc = 0;
 }
 
-void step(u8 *mem) {
-    u8 op = mem[cpu.pc];
+void step(Cpu6502 *cpu, u8 *mem) {
+    u8 op = mem[cpu->pc];
     switch (op) {
 
     // ADD
     case 0x69:case 0x65:case 0x75:case 0x6D:case 0x7D:case 0x79:case 0x61:
     case 0x71:
-        adc(mem, opcodes[op]);
+        adc(cpu, mem, opcodes[op]);
         break;
 
     // AND
     case 0x29:case 0x25:case 0x35:case 0x2D:case 0x3D:case 0x39:case 0x21:
     case 0x31:
-        and_op(mem, opcodes[op]);
+        and_op(cpu, mem, opcodes[op]);
         break;
 
     // ASL
     case 0x0A:case 0x06:case 0x16:case 0x0E:case 0x1E:
-        asl_op(mem, opcodes[op]);
+        asl_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x90:
-        bcc_op(mem, opcodes[op]);
+        bcc_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xB0:
-        bcs_op(mem, opcodes[op]);
+        bcs_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xF0:
-        beq_op(mem, opcodes[op]);
+        beq_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x24:case 0x2C:
-        bit_op(mem, opcodes[op]);
+        bit_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x30:
-        bmi_op(mem, opcodes[op]);
+        bmi_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xD0:
-        bne_op(mem, opcodes[op]);
+        bne_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x10:
-        bpl_op(mem, opcodes[op]);
+        bpl_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x00:
-        brk_op(mem, opcodes[op]);
+        brk_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x50:
-        bvc_op(mem, opcodes[op]);
+        bvc_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x70:
-        bvs_op(mem, opcodes[op]);
+        bvs_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x18:
-        clc_op(mem, opcodes[op]);
+        clc_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xD8:
-        cld_op(mem, opcodes[op]);
+        cld_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x58:
-        cli_op(mem, opcodes[op]);
+        cli_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xB8:
-        clv_op(mem, opcodes[op]);
+        clv_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xC9:case 0xC5:case 0xD5:case 0xCD:case 0xDD:case 0xD9:case 0xC1:
     case 0xD1:
-        cmp_op(mem, opcodes[op]);
+        cmp_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xE0:case 0xE4:case 0xEC:
-        cpx_op(mem, opcodes[op]);
+        cpx_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xC0:case 0xC4:case 0xCC:
-        cpy_op(mem, opcodes[op]);
+        cpy_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xC6:case 0xD6:case 0xCE:case 0xDE:
-        dec_op(mem, opcodes[op]);
+        dec_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xCA:
-        dex_op(mem, opcodes[op]);
+        dex_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x88:
-        dey_op(mem, opcodes[op]);
+        dey_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x49:case 0x45:case 0x55:case 0x4D:case 0x5D:case 0x59:case 0x41:
     case 0x51:
-        eor_op(mem, opcodes[op]);
+        eor_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xE6:case 0xF6:case 0xEE:case 0xFE:
-        inc_op(mem, opcodes[op]);
+        inc_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xE8:
-        inx_op(mem, opcodes[op]);
+        inx_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xC8:
-        iny_op(mem, opcodes[op]);
+        iny_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x4C:case 0x6C:
-        jmp_op(mem, opcodes[op]);
+        jmp_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x20:
-        jsr_op(mem, opcodes[op]);
+        jsr_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xA9:case 0xA5:case 0xB5:case 0xAD:case 0xBD:case 0xB9:case 0xA1:
     case 0xB1:
-        lda_op(mem, opcodes[op]);
+        lda_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xA2:case 0xA6:case 0xB6:case 0xAE:case 0xBE:
-        ldx_op(mem, opcodes[op]);
+        ldx_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xA0:case 0xA4:case 0xB4:case 0xAC:case 0xBC:
-        ldy_op(mem, opcodes[op]);
+        ldy_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x4A:case 0x46:case 0x56:case 0x4E:case 0x5E:
-        lsr_op(mem, opcodes[op]);
+        lsr_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xEA:
-        nop_op(mem, opcodes[op]);
+        nop_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x09:case 0x05:case 0x15:case 0x0D:case 0x1D:case 0x19:case 0x01:
     case 0x11:
-        ora_op(mem, opcodes[op]);
+        ora_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x48:
-        pha_op(mem, opcodes[op]);
+        pha_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x08:
-        php_op(mem, opcodes[op]);
+        php_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x68:
-        pla_op(mem, opcodes[op]);
+        pla_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x28:
-        plp_op(mem, opcodes[op]);
+        plp_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x2A:case 0x26:case 0x36:case 0x2E:case 0x3E:
-        rol_op(mem, opcodes[op]);
+        rol_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x6A:case 0x66:case 0x76:case 0x6E:case 0x7E:
-        ror_op(mem, opcodes[op]);
+        ror_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x40:
-        rti_op(mem, opcodes[op]);
+        rti_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x60:
-        rts_op(mem, opcodes[op]);
+        rts_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xE9:case 0xE5:case 0xF5:case 0xED:case 0xFD:case 0xF9:case 0xE1:
     case 0xF1:
-        sbc_op(mem, opcodes[op]);
+        sbc_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x38:
-        sec_op(mem, opcodes[op]);
+        sec_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xF8:
-        sed_op(mem, opcodes[op]);
+        sed_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x78:
-        sei_op(mem, opcodes[op]);
+        sei_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x85:case 0x95:case 0x8D:case 0x9D:case 0x99:case 0x81:case 0x91:
-        sta_op(mem, opcodes[op]);
+        sta_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x86:case 0x96:case 0x8E:
-        stx_op(mem, opcodes[op]);
+        stx_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x84:case 0x94:case 0x8C:
-        sty_op(mem, opcodes[op]);
+        sty_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xAA:
-        tax_op(mem, opcodes[op]);
+        tax_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xA8:
-        tay_op(mem, opcodes[op]);
+        tay_op(cpu, mem, opcodes[op]);
         break;
 
     case 0xBA:
-        tsx_op(mem, opcodes[op]);
+        tsx_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x8A:
-        txa_op(mem, opcodes[op]);
+        txa_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x9A:
-        txs_op(mem, opcodes[op]);
+        txs_op(cpu, mem, opcodes[op]);
         break;
 
     case 0x98:
-        txy_op(mem, opcodes[op]);         
+        txy_op(cpu, mem, opcodes[op]);         
         break;
       
     default:
@@ -584,124 +604,100 @@ void step(u8 *mem) {
     }
 }
 
-void run_until(u8 *mem, u16 address) {
-    while (cpu.pc != address) {
-        step(mem);
+void run_until(Cpu6502 *cpu, u8 *mem, u16 address) {
+    while (cpu->pc != address) {
+        step(cpu, mem);
     }
-}
-
-u8 get_reg_a() {
-    return (u8)cpu.a;
-}
-
-u8 get_reg_x() {
-    return cpu.x;
-}
-
-u8 get_reg_y() {
-    return cpu.y;
-}
-
-u8 get_reg_sp() {
-    return cpu.sp;
-}
-
-u8 get_reg_status() {
-    return cpu.status;
-}
-
-u16 get_reg_pc() {
-    return cpu.pc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS
 ////////////////////////////////////////////////////////////////////////////////
-void test_immediate() {
+void test_immediate(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 2, 3};
-    cpu.pc = 0;
+    cpu->pc = 0;
     OpCode op = {"", 0, 0, IMMEDIATE, 0};
-    assert(*get_value(mem, op) == 1);
+    assert(get_value(cpu, mem, op) == 1);
 
-    init();
+    init(cpu);
 }
 
-void test_zero_page() {
+void test_zero_page(Cpu6502 *cpu) {
     u8 mem[] = {0, 3, 2, 3, 4, 5};
-    cpu.pc = 0;
+    cpu->pc = 0;
     OpCode op = {"", 0, 0, ZERO_PAGE, 0};
-    assert(*get_value(mem, op) == 3);
+    assert(get_value(cpu, mem, op) == 3);
 
-    init();
+    init(cpu);
 }
 
-void test_zero_page_X() {
+void test_zero_page_X(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 2, 3, 4, 5};
-    cpu.pc = 0;
-    cpu.x = 4;
+    cpu->pc = 0;
+    cpu->x = 4;
     OpCode op = {"", 0, 0, ZERO_PAGE_X, 0};
-    assert(*get_value(mem, op) == 5);
+    assert(get_value(cpu, mem, op) == 5);
 
-    init();
+    init(cpu);
 }
 
-void test_zero_page_Y() {
+void test_zero_page_Y(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 2, 3, 4, 5};
-    cpu.pc = 0;
-    cpu.y = 4;
+    cpu->pc = 0;
+    cpu->y = 4;
     OpCode op = {"", 0, 0, ZERO_PAGE_Y, 0};
-    assert(*get_value(mem, op) == 5);
+    assert(get_value(cpu, mem, op) == 5);
 
-    init();
+    init(cpu);
 }
 
-void test_absolute() {
+void test_absolute(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 0, 3, 4, 5};
-    cpu.pc = 0;
+    cpu->pc = 0;
     OpCode op = {"", 0, 0, ABSOLUTE, 0};
-    assert(*get_value(mem, op) == 1);
+    assert(get_value(cpu, mem, op) == 1);
 
-    init();
+    init(cpu);
 }
 
-void test_absolute_X() {
+void test_absolute_X(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 0, 3, 4, 5};
-    cpu.pc = 0;
-    cpu.x = 1;
+    cpu->pc = 0;
+    cpu->x = 1;
     OpCode op = {"", 0, 0, ABSOLUTE_X, 0};
-    assert(*get_value(mem, op) == 0);
+    assert(get_value(cpu, mem, op) == 0);
 
-    init();
+    init(cpu);
 }
 
-void test_absolute_Y() {
+void test_absolute_Y(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 0, 3, 4, 5};
-    cpu.pc = 0;
-    cpu.y = 1;
+    cpu->pc = 0;
+    cpu->y = 1;
     OpCode op = {"", 0, 0, ABSOLUTE_Y, 0};
-    assert(*get_value(mem, op) == 0);
+    assert(get_value(cpu, mem, op) == 0);
 
-    init();
+    init(cpu);
 }
 
-void test_indexed_indirect() {
+void test_indexed_indirect(Cpu6502 *cpu) {
     u8 mem[] = {0, 0, 0, 3, 0, 0};
-    cpu.pc = 0;
-    cpu.x = 3;
+    cpu->pc = 0;
+    cpu->x = 3;
     OpCode op = {"", 0, 0, INDEXED_INDIRECT, 0};
-    assert(*get_value(mem, op) == 3);
+    assert(get_value(cpu, mem, op) == 3);
 
-    init();
+    init(cpu);
 }
 
-void test_indirect_indexed() {
+void test_indirect_indexed(Cpu6502 *cpu) {
     u8 mem[] = {0, 0, 0, 3, 0, 0};
-    cpu.pc = 0;
-    cpu.y = 3;
+    cpu->pc = 0;
+    cpu->y = 3;
     OpCode op = {"", 0, 0, INDIRECT_INDEXED, 0};
-    assert(*get_value(mem, op) == 3);
+    assert(get_value(cpu, mem, op) == 3);
 
-    init();
+    init(cpu);
 }
 
 }
