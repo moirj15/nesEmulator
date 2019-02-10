@@ -8,7 +8,11 @@ namespace Cpu {
 
 //static Cpu6502 cpu;
 static const s32 cycles_per_second = 1790000;
-static s32 cycle_count;
+static s32 cycle_count = 0;
+
+////////////////////////////////////////////////////////////////////////////////
+// UTILITIES
+////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Get the correct value from memory depending on the opcode addressing mode.
@@ -61,6 +65,12 @@ static u8 &get_value(Cpu6502 *cpu, u8 *mem, OpCode op) {
     }
 }
 
+static inline void set_if_zero(Cpu6502 *cpu, u8 val) {
+    if (!val) {
+        cpu->status |= ZERO_FLAG;
+    }
+}
+
 static void new_page_check(Cpu6502 *cpu, s8 offset) {
     u16 old_pc = cpu->pc;
     cpu->pc += offset;
@@ -69,6 +79,30 @@ static void new_page_check(Cpu6502 *cpu, s8 offset) {
         cycle_count += 2;
     }
 
+}
+
+static void cond_branch(Cpu6502 *cpu, bool cond, u8 *mem) {
+    cpu->pc++;
+    if (cond) {
+        s8 offset = mem[cpu->pc];
+        new_page_check(cpu, offset);
+        cycle_count += 2;
+    }
+    cycle_count++;
+    cpu->pc++;
+}
+
+static void compare(Cpu6502 *cpu, u8 reg, u8 *mem, OpCode op) {
+    u8 &val = get_value(cpu, mem, op);
+    u8 compare = reg - val;
+    if (reg >= val) {
+        cpu->status |= CARRY_FLAG; 
+    }
+    if (compare == 0) {
+        cpu->status |= ZERO_FLAG;
+    }
+    cpu->status |= compare & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // INSTRUCTION IMPLEMENTATIONS
@@ -128,87 +162,125 @@ static void asl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     cpu->pc++;
 }
 
+
 static void bcc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    cpu->pc++;
-    if (!(cpu->status & CARRY_FLAG)) {
-        s8 offset = mem[cpu->pc];
-        new_page_check(cpu, offset);
-        cycle_count += 2;
-    }
-    cycle_count++;
-    cpu->pc++;
+    (void)op;
+    cond_branch(cpu, !(cpu->status & CARRY_FLAG), mem);
 }
 
 static void bcs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cond_branch(cpu, (cpu->status & CARRY_FLAG), mem);
 }
+
 static void beq_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cond_branch(cpu, (cpu->status & ZERO_FLAG), mem);
 }
+
 static void bit_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    u8 tmp = cpu->a & val;
+    if (tmp == 0) {
+        cpu->status |= ZERO_FLAG;
+    }
+    else {
+        cpu->status &= ~((u8)1);
+    }
+    cpu->status |= (tmp & OVERFLOW_FLAG) | (tmp & NEGATIVE_FLAG);
+    cpu->pc++;
 }
-static void bmi_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
+static void bmi_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)op;
+    cond_branch(cpu, (cpu->status & NEGATIVE_FLAG), mem);
 }
 
 static void bne_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cond_branch(cpu, !(cpu->status & ZERO_FLAG), mem);
 }
-static void bpl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
+static void bpl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)op;
+    cond_branch(cpu, !(cpu->status & NEGATIVE_FLAG), mem);
 }
 
 static void brk_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    assert(0 && "TODO BRK");
 }
 
 static void bvc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cond_branch(cpu, !(cpu->status & OVERFLOW_FLAG), mem);
 }
 
 static void bvs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cond_branch(cpu, (cpu->status & OVERFLOW_FLAG), mem);
 }
 
 static void clc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->pc++;
+    (void)mem;
+    (void)op;
+    cpu->status &= ~((u8)CARRY_FLAG);
 }
 
 static void cld_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->pc++;
+    (void)mem;
+    (void)op;
+    cpu->status &= ~((u8)DECIMAL_MODE_FLAG);
 }
 
 static void cli_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->pc++;
+    (void)mem;
+    (void)op;
+    cpu->status &= ~((u8)INTERRUPT_DISSABLE_FLAG);
 }
 
 static void clv_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->pc++;
+    (void)mem;
+    (void)op;
+    cpu->status &= ~((u8)OVERFLOW_FLAG);
 }
 
 static void cmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    compare(cpu, (u8)cpu->a, mem, op);
 }
 
 static void cpx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    compare(cpu, (u8)cpu->x, mem, op);
 }
 
 static void cpy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    compare(cpu, (u8)cpu->y, mem, op);
 }
 
-static void dec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
+static void dec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    u8 &val = get_value(cpu, mem, op);
+    val--;
+    set_if_zero(cpu, val);
+    cpu->status |= val & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void dex_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->x--;
+    set_if_zero(cpu, cpu->x);
+    cpu->status |= cpu->x & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void dey_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->y--;
+    set_if_zero(cpu, cpu->y);
+    cpu->status |= cpu->y & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void eor_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -613,6 +685,9 @@ void run_until(Cpu6502 *cpu, u8 *mem, u16 address) {
 ////////////////////////////////////////////////////////////////////////////////
 // TESTS
 ////////////////////////////////////////////////////////////////////////////////
+
+// TODO: move these into the test file
+
 void test_immediate(Cpu6502 *cpu) {
     u8 mem[] = {0, 1, 2, 3};
     cpu->pc = 0;
