@@ -135,9 +135,7 @@ static void and_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
     cpu->status |= cpu->a & NEGATIVE_FLAG;
 
-    if (cpu->a == 0) {
-        cpu->status |= ZERO_FLAG;
-    }
+    set_if_zero(cpu, cpu->a);
 
     cpu->pc++;
 }
@@ -260,7 +258,6 @@ static void cpy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     compare(cpu, (u8)cpu->y, mem, op);
 }
 
-
 static void dec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     u8 &val = get_value(cpu, mem, op);
     val--;
@@ -284,39 +281,88 @@ static void dey_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void eor_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    u8 &val = get_value(cpu, mem, op);
+    cpu->a ^= val;
+    set_if_zero(cpu, cpu->a);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
 
+    cpu->pc++;
 }
 
 static void inc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    val++;
+    set_if_zero(cpu, val);
+    cpu->status |= val & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void inx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->x++;
+    set_if_zero(cpu, cpu->x);
+    cpu->status |= cpu->x & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void iny_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->y++;
+    set_if_zero(cpu, cpu->y);
+    cpu->status |= cpu->y & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void jmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u16 address = 0;
+    if (op.address_mode == ABSOLUTE) {
+        u8 &val = get_value(cpu, mem, op);
+        address = (&val) - mem;
+    }
+    else {
+        cpu->pc++;
+        u16 vector = mem[cpu->pc];
+        cpu->pc++;
+        vector |= mem[cpu->pc] << 8;
+        // take care of case where lsb of target address lies on page boundry
+        if ((0x00FF & vector) == 0x00FF) {
+            address = mem[vector];
+            address |= mem[vector & 0xFF00] << 8;
+        }
+        else {
+            address = mem[vector];
+            address |= mem[vector + 1] << 8;
+        }
+    }
+    cpu->pc = address;
+    cpu->pc++;
 }
 
 static void jsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    assert(0 && "TODO JSR");
 }
 
 static void lda_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    cpu->a = val;
+    set_if_zero(cpu, cpu->a);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void ldx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    u8 &val = get_value(cpu, mem, op);
+    cpu->x = val;
+    set_if_zero(cpu, cpu->x);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 
 }
 
 static void ldy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    cpu->y = val;
+    set_if_zero(cpu, cpu->y);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void lsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
