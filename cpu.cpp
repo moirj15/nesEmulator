@@ -104,6 +104,16 @@ static void compare(Cpu6502 *cpu, u8 reg, u8 *mem, OpCode op) {
     cpu->status |= compare & NEGATIVE_FLAG;
     cpu->pc++;
 }
+
+static inline u8 pop_stack(Cpu6502 *cpu, u8 *mem) {
+    cpu->sp++;
+    return mem[0x0100 + cpu->sp];
+}
+
+static inline void push_stack(Cpu6502 *cpu, u8 *mem, u8 val) {
+    mem[0x0100 + cpu->sp] = val;
+    cpu->sp--;
+}
 ////////////////////////////////////////////////////////////////////////////////
 // INSTRUCTION IMPLEMENTATIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -205,7 +215,12 @@ static void bpl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void brk_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    assert(0 && "TODO BRK");
+    push_stack(cpu, mem, cpu->pc);
+    push_stack(cpu, mem, cpu->status);
+    u16 irq_vector = mem[0xFFFE];
+    irq_vector |= mem[0xFFFF] << 8;
+    cpu->status |= BREAK_FLAG;
+    cpu->pc++;
 }
 
 static void bvc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -352,21 +367,31 @@ static void ldx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     u8 &val = get_value(cpu, mem, op);
     cpu->x = val;
     set_if_zero(cpu, cpu->x);
-    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->status |= cpu->x & NEGATIVE_FLAG;
     cpu->pc++;
-
 }
 
 static void ldy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     u8 &val = get_value(cpu, mem, op);
     cpu->y = val;
     set_if_zero(cpu, cpu->y);
-    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->status |= cpu->y & NEGATIVE_FLAG;
     cpu->pc++;
 }
 
 static void lsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    u8 tmp = val & CARRY_FLAG;
+    if (tmp == 0) {
+        cpu->status &= ~((u8)OVERFLOW_FLAG);
+    }
+    else {
+        cpu->status |= CARRY_FLAG;
+    }
+    val >>= 1;
+    set_if_zero(cpu, val);
+    cpu->status |= val & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void nop_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -376,31 +401,69 @@ static void nop_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void ora_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    cpu->a |= val;
+    set_if_zero(cpu, cpu->a);
+    cpu->status |= val & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
-static void pha_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
+static void pha_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)op;
+    push_stack(cpu, mem, cpu->a);
+    cpu->pc++;
 }
 
 static void php_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    push_stack(cpu, mem, cpu->status);
+    cpu->pc++;
 }
 
 static void pla_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cpu->a = pop_stack(cpu, mem);
+    set_if_zero(cpu, cpu->a);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void plp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->status = pop_stack(cpu, mem);
+    cpu->pc++;
 }
 
 static void rol_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    u8 old_7th_bit = 0x80 & val;
+    val <<= 1;
+    val |= (cpu->status & CARRY_FLAG);
+    if (old_7th_bit) {
+        cpu->status |= CARRY_FLAG;
+    }
+    else {
+        cpu->status &= ~((u8)CARRY_FLAG);
+    }
+    set_if_zero(cpu, val);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void ror_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    u8 old_0th_bit = 0x01 & val;
+    val >>= 1;
+    val |= (cpu->status & CARRY_FLAG) << 7;
+    if (old_0th_bit) {
+        cpu->status |= CARRY_FLAG;
+    }
+    else {
+        cpu->status &= ~((u8)CARRY_FLAG);
+    }
+    set_if_zero(cpu, val);
+    cpu->status |= cpu->a & NEGATIVE_FLAG;
+    cpu->pc++;
 }
 
 static void rti_op(Cpu6502 *cpu, u8 *mem, OpCode op) {

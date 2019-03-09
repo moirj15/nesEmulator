@@ -162,6 +162,19 @@ static void bpl_test() {
     EXPECT_EQ(cpu.pc, 0x03);
 }
 
+static void brk_test() {
+    printf("TESTING BRK\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    u8 interrupt_test[0xFFFF];
+    memset(interrupt_test, 0, sizeof(interrupt_test));
+    interrupt_test[0] = 0x00;
+    interrupt_test[0xFFFE] = 0xCC;
+    interrupt_test[0xFFFF] = 0xBA;
+    Cpu::step(&cpu, interrupt_test);
+    EXPECT_EQ(cpu.pc, 0xBACC);
+}
+
 static void bvc_test() {
     printf("TESTING BVC\n");
     Cpu::Cpu6502 cpu;
@@ -501,16 +514,170 @@ static void lda_test() {
     printf("TESTING LDA\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
+    u8 zero_test[] = {
+        0xA9, 0x00
+    };
+    Cpu::step(&cpu, zero_test);
+    EXPECT_EQ(cpu.a, 0);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG);
+
+    Cpu::test_init(&cpu);
+    u8 neg_test[] = {
+        0xA9, 0x80
+    };
+    Cpu::step(&cpu, neg_test);
+    EXPECT_EQ(cpu.a, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::NEGATIVE_FLAG);
+
 }
 
 static void ldx_test() {
     printf("TESTING LDX\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
+    u8 zero_test[] = {
+        0xA2, 0x00
+    };
+    Cpu::step(&cpu, zero_test);
+    EXPECT_EQ(cpu.x, 0);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG);
+
+    Cpu::test_init(&cpu);
+    u8 neg_test[] = {
+        0xA2, 0x80
+    };
+    Cpu::step(&cpu, neg_test);
+    EXPECT_EQ(cpu.x, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::NEGATIVE_FLAG);
 }
 
 static void ldy_test() {
     printf("TESTING LDY\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    u8 zero_test[] = {
+        0xA0, 0x00
+    };
+    Cpu::step(&cpu, zero_test);
+    EXPECT_EQ(cpu.y, 0);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG);
+
+    Cpu::test_init(&cpu);
+    u8 neg_test[] = {
+        0xA0, 0x80
+    };
+    Cpu::step(&cpu, neg_test);
+    EXPECT_EQ(cpu.y, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::NEGATIVE_FLAG);
+}
+
+static void lsr_test() {
+    printf("TESTING LSR\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.a = 1;
+    u8 zero_and_carry_test[] = {
+        0x4A,
+    };
+    Cpu::step(&cpu, zero_and_carry_test);
+    EXPECT_EQ(cpu.a, 0);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG | Cpu::CARRY_FLAG);
+
+    Cpu::test_init(&cpu);
+    cpu.a = 2;
+    u8 clear_carry_test[] = {
+        0x4A,
+    };
+    Cpu::step(&cpu, clear_carry_test);
+    EXPECT_EQ(cpu.a, 1);
+    EXPECT_EQ(cpu.status, 0);
+}
+
+static void ora_test() {
+    printf("TESTING ORA\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    u8 neg_test[] = {
+        0x09, 0x80
+    };
+    Cpu::step(&cpu, neg_test);
+    EXPECT_EQ(cpu.a, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::NEGATIVE_FLAG);
+
+    Cpu::test_init(&cpu);
+    u8 zero_test[] = {
+        0x09, 0x00
+    };
+    Cpu::step(&cpu, zero_test);
+    EXPECT_EQ(cpu.a, 0x00);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG);
+}
+
+static void pha_test() {
+    printf("TESTING PHA\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.a = 0xab;
+    u8 push_test[0x200];
+    memset(push_test, 0, sizeof(push_test));
+    push_test[0] =  0x48;
+    Cpu::step(&cpu, push_test);
+    EXPECT_EQ(push_test[cpu.sp + 0x101], cpu.a);
+}
+
+static void php_test() {
+    printf("TESTING PHP\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.status = Cpu::NEGATIVE_FLAG | Cpu::BREAK_FLAG | Cpu::CARRY_FLAG;
+    u8 push_test[0x200];
+    memset(push_test, 0, sizeof(push_test));
+    push_test[0] =  0x28;
+    Cpu::step(&cpu, push_test);
+    EXPECT_EQ(push_test[cpu.sp + 0x101], cpu.status);
+}
+
+static void pla_test() {
+    printf("TESTING PLA\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.sp--;
+    u8 pull_test[0x200];
+    memset(pull_test, 0, sizeof(pull_test));
+    pull_test[0x1FF] = 0x80;
+    pull_test[0] =  0x68;
+    Cpu::step(&cpu, pull_test);
+    EXPECT_EQ(pull_test[0x1FF], cpu.a);
+
+    Cpu::test_init(&cpu);
+    cpu.sp--;
+    pull_test[0x1FF] = 0x00;
+    pull_test[0] =  0x68;
+    Cpu::step(&cpu, pull_test);
+    EXPECT_EQ(pull_test[0x1FF], cpu.a);
+}
+
+static void plp_test() {
+    printf("TESTING PLP\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.sp--;
+    u8 pull_test[0x200];
+    memset(pull_test, 0, sizeof(pull_test));
+    pull_test[0x1FF] = Cpu::NEGATIVE_FLAG | Cpu::BREAK_FLAG | Cpu::CARRY_FLAG;
+    pull_test[0] =  0x28;
+    Cpu::step(&cpu, pull_test);
+    EXPECT_EQ(pull_test[0x1FF], cpu.status);
+}
+
+static void rol_test() {
+    printf("TESTING ROL\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+}
+
+static void ror_test() {
+    printf("TESTING ROR\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
 }
@@ -543,6 +710,15 @@ void run() {
     inx_test();
     iny_test();
     jmp_test();
+    lda_test();
+    ldx_test();
+    ldy_test();
+    lsr_test();
+    ora_test();
+    pha_test();
+    php_test();
+    pla_test();
+    plp_test();
 }
 
 #if 0
