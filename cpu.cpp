@@ -167,7 +167,9 @@ static void asl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     }
     cpu->status |= (val & NEGATIVE_FLAG);
 
-    cpu->pc++;
+    if (op.address_mode != ACCUMULATOR) {
+        cpu->pc++;
+    }
 }
 
 
@@ -352,7 +354,9 @@ static void jmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void jsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    assert(0 && "TODO JSR");
+    u16 address = (&get_value(cpu, mem, op)) - mem;
+    push_stack(cpu, mem, cpu->pc);
+    cpu->pc = address;
 }
 
 static void lda_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -391,7 +395,9 @@ static void lsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     val >>= 1;
     set_if_zero(cpu, val);
     cpu->status |= val & NEGATIVE_FLAG;
-    cpu->pc++;
+    if (op.address_mode != ACCUMULATOR) {
+        cpu->pc++;
+    }
 }
 
 static void nop_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -447,7 +453,9 @@ static void rol_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     }
     set_if_zero(cpu, val);
     cpu->status |= cpu->a & NEGATIVE_FLAG;
-    cpu->pc++;
+    if (op.address_mode != ACCUMULATOR) {
+        cpu->pc++;
+    }
 }
 
 static void ror_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -463,67 +471,107 @@ static void ror_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     }
     set_if_zero(cpu, val);
     cpu->status |= cpu->a & NEGATIVE_FLAG;
-    cpu->pc++;
+    if (op.address_mode != ACCUMULATOR) {
+        cpu->pc++;
+    }
 }
 
 static void rti_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)op;
+    cpu->status = pop_stack(cpu, mem);
+    cpu->pc = pop_stack(cpu, mem);
+    cpu->pc++;
 }
 
 static void rts_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->pc = pop_stack(cpu, mem);
+    cpu->pc++;
 }
 
 static void sbc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 overflow_check = cpu->a & 0x80;
+    u8 &val = get_value(cpu, mem, op);
+    cpu->a = cpu->a - val - (1 - (CARRY_FLAG & cpu->status));
+    set_if_zero(cpu, cpu->a);
+    if (0xFF00 & cpu->a) {
+        cpu->status &= ~((u8)CARRY_FLAG);
+    }
+    if (overflow_check != (cpu->a & 0x80)) {
+        cpu->status |= OVERFLOW_FLAG;
+    }
+    if (overflow_check) {
+        cpu->status |= NEGATIVE_FLAG;
+    }
+    cpu->pc++;
 }
 
 static void sec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)mem;
+    (void)op;
+    cpu->status |= CARRY_FLAG; 
+    cpu->pc++;
 }
 
 static void sed_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)mem;
+    (void)op;
+    cpu->status |= DECIMAL_MODE_FLAG;
+    cpu->pc++;
 }
 
 static void sei_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    (void)mem;
+    (void)op;
+    cpu->status |= INTERRUPT_DISSABLE_FLAG;
+    cpu->pc++;
 }
 
 static void sta_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    val = (u8)cpu->a;
+    cpu->pc++;
 }
 
 static void stx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    val = (u8)cpu->x;
+    cpu->pc++;
 }
 
 static void sty_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    u8 &val = get_value(cpu, mem, op);
+    val = (u8)cpu->y;
+    cpu->pc++;
 }
 
 static void tax_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->x = cpu->a;
+    cpu->pc++;
 }
 
 static void tay_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->y = cpu->a;
+    cpu->pc++;
 }
 
 static void tsx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->x = cpu->pc;
+    cpu->pc++;
 }
 
 static void txa_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->a = cpu->x;
+    cpu->pc++;
 }
 
 static void txs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->sp = cpu->x;
+    cpu->pc++;
 }
 
 static void txy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-
+    cpu->a = cpu->y;
+    cpu->pc++;
 }
 
 void init(Cpu6502 *cpu) {

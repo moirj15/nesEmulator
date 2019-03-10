@@ -674,12 +674,40 @@ static void rol_test() {
     printf("TESTING ROL\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
+    cpu.a = 0x80;
+    u8 rotate_test[] = {
+        0x2A, 0x2A,
+    };
+    Cpu::step(&cpu, rotate_test);
+    EXPECT_EQ(cpu.a, 0x00);
+    EXPECT_EQ(cpu.status, Cpu::CARRY_FLAG | Cpu::ZERO_FLAG);
+    Cpu::step(&cpu, rotate_test);
+    EXPECT_EQ(cpu.a, 0x01);
+    Cpu::test_init(&cpu);
+    cpu.a = 0x40;
+    u8 negative_test[] = {
+        0x2A,
+    };
+    Cpu::step(&cpu, negative_test);
+    EXPECT_EQ(cpu.a, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::NEGATIVE_FLAG);
 }
 
 static void ror_test() {
     printf("TESTING ROR\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
+    cpu.a = 0x01;
+    u8 rotate_test[] = {
+        0x6A, 0x6A
+    };
+    Cpu::step(&cpu, rotate_test);
+    EXPECT_EQ(cpu.a, 0x00);
+    EXPECT_EQ(cpu.status, Cpu::CARRY_FLAG | Cpu::ZERO_FLAG);
+
+    Cpu::step(&cpu, rotate_test);
+    EXPECT_EQ(cpu.a, 0x80);
+    EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG | Cpu::NEGATIVE_FLAG);
 }
 
 void run() {
@@ -719,6 +747,9 @@ void run() {
     php_test();
     pla_test();
     plp_test();
+    rol_test();
+    ror_test();
+
 }
 
 #if 0
