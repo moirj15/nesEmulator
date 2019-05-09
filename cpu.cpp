@@ -62,6 +62,9 @@ static u8 &get_value(Cpu6502 *cpu, u8 *mem, OpCode op) {
     }
     case ACCUMULATOR:
         return *((u8*)&cpu->a);
+    default:
+        fprintf(stderr, "BAD ADDRESSING MODE %d\n", op.address_mode);
+        assert(0);
     }
 }
 
@@ -105,14 +108,27 @@ static void compare(Cpu6502 *cpu, u8 reg, u8 *mem, OpCode op) {
     cpu->pc++;
 }
 
-static inline u8 pop_stack(Cpu6502 *cpu, u8 *mem) {
+static inline u8 pop_stack8(Cpu6502 *cpu, u8 *mem) {
     cpu->sp++;
     return mem[0x0100 + cpu->sp];
 }
 
-static inline void push_stack(Cpu6502 *cpu, u8 *mem, u8 val) {
+static inline u16 pop_stack16(Cpu6502 *cpu, u8 *mem) {
+    u16 ret = mem[0x0100 + cpu->sp + 1] << 8;
+    ret |= mem[0x0100 + cpu->sp + 2];
+    cpu->sp -= 2;
+    return ret;
+}
+
+static inline void push_stack8(Cpu6502 *cpu, u8 *mem, u8 val) {
     mem[0x0100 + cpu->sp] = val;
     cpu->sp--;
+}
+
+static inline void push_stack16(Cpu6502 *cpu, u8 *mem, u16 val) {
+    mem[0x0100 + cpu->sp] = (u8)(0x00FF & val);
+    mem[0x0100 + cpu->sp - 1] = (u8)val >> 8;
+    cpu->sp -= 2;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // INSTRUCTION IMPLEMENTATIONS
@@ -217,12 +233,13 @@ static void bpl_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void brk_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    push_stack(cpu, mem, cpu->pc);
-    push_stack(cpu, mem, cpu->status);
+    (void)op;
+    push_stack16(cpu, mem, cpu->pc);
+    push_stack8(cpu, mem, cpu->status);
     u16 irq_vector = mem[0xFFFE];
     irq_vector |= mem[0xFFFF] << 8;
     cpu->status |= BREAK_FLAG;
-    cpu->pc++;
+    cpu->pc = irq_vector;
 }
 
 static void bvc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
@@ -284,6 +301,8 @@ static void dec_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void dex_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->x--;
     set_if_zero(cpu, cpu->x);
     cpu->status |= cpu->x & NEGATIVE_FLAG;
@@ -291,6 +310,8 @@ static void dex_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void dey_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->y--;
     set_if_zero(cpu, cpu->y);
     cpu->status |= cpu->y & NEGATIVE_FLAG;
@@ -315,6 +336,8 @@ static void inc_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void inx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->x++;
     set_if_zero(cpu, cpu->x);
     cpu->status |= cpu->x & NEGATIVE_FLAG;
@@ -322,6 +345,8 @@ static void inx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void iny_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->y++;
     set_if_zero(cpu, cpu->y);
     cpu->status |= cpu->y & NEGATIVE_FLAG;
@@ -350,12 +375,12 @@ static void jmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
         }
     }
     cpu->pc = address;
-    cpu->pc++;
+    //cpu->pc++;
 }
 
 static void jsr_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    u16 address = (&get_value(cpu, mem, op)) - mem;
-    push_stack(cpu, mem, cpu->pc);
+    u16 address = (u16)((&get_value(cpu, mem, op)) - mem);
+    push_stack16(cpu, mem, cpu->pc);
     cpu->pc = address;
 }
 
@@ -417,26 +442,27 @@ static void ora_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 static void pha_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     (void)op;
-    push_stack(cpu, mem, cpu->a);
+    push_stack8(cpu, mem, cpu->a);
     cpu->pc++;
 }
 
 static void php_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     (void)op;
-    push_stack(cpu, mem, cpu->status);
+    push_stack8(cpu, mem, cpu->status);
     cpu->pc++;
 }
 
 static void pla_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     (void)op;
-    cpu->a = pop_stack(cpu, mem);
+    cpu->a = pop_stack8(cpu, mem);
     set_if_zero(cpu, cpu->a);
     cpu->status |= cpu->a & NEGATIVE_FLAG;
     cpu->pc++;
 }
 
 static void plp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    cpu->status = pop_stack(cpu, mem);
+    (void)op;
+    cpu->status = pop_stack8(cpu, mem);
     cpu->pc++;
 }
 
@@ -478,13 +504,14 @@ static void ror_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 
 static void rti_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     (void)op;
-    cpu->status = pop_stack(cpu, mem);
-    cpu->pc = pop_stack(cpu, mem);
+    cpu->status = pop_stack8(cpu, mem);
+    cpu->pc = pop_stack16(cpu, mem);
     cpu->pc++;
 }
 
 static void rts_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
-    cpu->pc = pop_stack(cpu, mem);
+    (void)op;
+    cpu->pc = pop_stack16(cpu, mem);
     cpu->pc++;
 }
 
@@ -545,31 +572,43 @@ static void sty_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 }
 
 static void tax_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->x = cpu->a;
     cpu->pc++;
 }
 
 static void tay_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->y = cpu->a;
     cpu->pc++;
 }
 
 static void tsx_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->x = cpu->pc;
     cpu->pc++;
 }
 
 static void txa_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->a = cpu->x;
     cpu->pc++;
 }
 
 static void txs_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->sp = cpu->x;
     cpu->pc++;
 }
 
 static void txy_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
+    (void)mem;
+    (void)op;
     cpu->a = cpu->y;
     cpu->pc++;
 }

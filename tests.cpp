@@ -166,7 +166,7 @@ static void brk_test() {
     printf("TESTING BRK\n");
     Cpu::Cpu6502 cpu;
     Cpu::test_init(&cpu);
-    u8 interrupt_test[0xFFFF];
+    u8 interrupt_test[0x10000];
     memset(interrupt_test, 0, sizeof(interrupt_test));
     interrupt_test[0] = 0x00;
     interrupt_test[0xFFFE] = 0xCC;
@@ -500,14 +500,26 @@ static void jmp_test() {
         0x4C, 0x03, 0x00, 0xAB
     };
     Cpu::step(&cpu, absolute_test);
-    EXPECT_EQ(cpu.pc, 0x04);
+    EXPECT_EQ(cpu.pc, 0x03);
 
     Cpu::test_init(&cpu);
     u8 indirect_test[] = {
         0x6C, 0x03, 0x00, 0x05, 0x00
     };
     Cpu::step(&cpu, indirect_test);
-    EXPECT_EQ(cpu.pc, 0x06);
+    EXPECT_EQ(cpu.pc, 0x05);
+}
+
+static void jsr_test() {
+    printf("TESTING JSR\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    u8 jsr_test[] = {
+        0x20, 0xFF, 0x00
+    };
+    Cpu::step(&cpu, jsr_test);
+    EXPECT_EQ(cpu.pc, 0xFF);
+
 }
 
 static void lda_test() {
@@ -710,6 +722,40 @@ static void ror_test() {
     EXPECT_EQ(cpu.status, Cpu::ZERO_FLAG | Cpu::NEGATIVE_FLAG);
 }
 
+static void rti_test() {
+    printf("TESTING RTI\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    cpu.status = 0xBA;
+    u8 return_interrupt_test[0x10000];
+    memset(return_interrupt_test, 0, sizeof(return_interrupt_test));
+    return_interrupt_test[0x00] = 0x00;
+    return_interrupt_test[0xFFFE] = 0xCC;
+    return_interrupt_test[0xFFFF] = 0xBA;
+    return_interrupt_test[0xBACC] = 0x40;
+    Cpu::step(&cpu, return_interrupt_test);
+    cpu.status = 0xAB;
+    Cpu::step(&cpu, return_interrupt_test);
+    EXPECT_EQ(cpu.pc, 0x01);
+    EXPECT_EQ(cpu.status, 0xBA);
+}
+
+static void rts_test() {
+    printf("TESTING RTS\n");
+    Cpu::Cpu6502 cpu;
+    Cpu::test_init(&cpu);
+    u8 return_subroutine_test[0x200];
+    memset(return_subroutine_test, 0, sizeof(return_subroutine_test));
+    return_subroutine_test[0] = 0x20;
+    return_subroutine_test[1] = 0xFF;
+    return_subroutine_test[2] = 0x00;
+    return_subroutine_test[0xFF] = 0x60;
+
+    Cpu::step(&cpu, return_subroutine_test);
+    Cpu::step(&cpu, return_subroutine_test);
+    EXPECT_EQ(cpu.pc, 0x03);
+}
+
 void run() {
     addressing_tests();
     and_test();
@@ -721,6 +767,7 @@ void run() {
     bmi_test();
     bne_test();
     bpl_test();
+    brk_test();
     bvc_test();
     bvs_test();
     clc_test();
@@ -738,6 +785,7 @@ void run() {
     inx_test();
     iny_test();
     jmp_test();
+    jsr_test();
     lda_test();
     ldx_test();
     ldy_test();
@@ -749,6 +797,8 @@ void run() {
     plp_test();
     rol_test();
     ror_test();
+    rti_test();
+    rts_test();
 
 }
 
