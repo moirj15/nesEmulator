@@ -3,6 +3,7 @@
 
 #include "cpu.h"
 #include "instructions.h"
+#include "ppu.h"
 
 namespace Cpu {
 
@@ -356,6 +357,7 @@ static void iny_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
 static void jmp_op(Cpu6502 *cpu, u8 *mem, OpCode op) {
     u16 address = 0;
     if (op.address_mode == ABSOLUTE) {
+        // TODO: need to change this after switching to bus struct
         u8 &val = get_value(cpu, mem, op);
         address = (&val) - mem;
     }
@@ -870,6 +872,7 @@ void step(Cpu6502 *cpu, u8 *mem) {
         assert(0);
         break;
     }
+    ppu::tick(opcodes[op].cycle_count);
 }
 
 void run_until(Cpu6502 *cpu, u8 *mem, u16 address) {

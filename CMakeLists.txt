@@ -5,8 +5,12 @@ add_executable(
 	main.cpp
 	utils.h
 	utils.cpp
-	cpu.h
+    bus.h
+    bus.cpp
+    cpu.h
 	cpu.cpp
+    ppu.h
+    ppu.cpp
     instructions.h
     instructions.cpp
     debugger.h
